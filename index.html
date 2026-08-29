@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>과학 형성평가 관리 시스템 | MINARI STUDIO</title>
   <meta name="description" content="과학 형성평가 관리 – 반별·평가별 1~3차 결과 관리">
   <link rel="icon" type="image/png" href="./favicon.png">
@@ -61,7 +62,8 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html, body {
+    html,
+    body {
       max-width: 100vw;
       overflow-x: hidden;
     }
@@ -585,6 +587,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
+
     .tbar.scrollable::-webkit-scrollbar {
       display: none;
     }
@@ -691,7 +694,7 @@
         font-size: .78rem;
         min-height: 32px;
       }
-      
+
       .scard {
         padding: 12px;
       }
@@ -721,41 +724,42 @@
   <div class="max-w-screen-xl mx-auto">
 
     <!-- TOP NAV / BRAND HEADER -->
-    <header class="surface bg-white px-4 py-3 mb-5 flex items-center justify-between gap-3">
+    <header class="surface bg-white px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-5 flex items-center justify-between gap-2 sm:gap-3">
       <!-- Left: Icon + Title + Subtitle -->
-      <div class="flex items-center gap-3">
-        <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-10 h-10 object-contain flex-shrink-0">
-        <div>
-          <h1 class="text-base text-slate-800 tracking-tight flex items-center gap-1.5"
-            style="font-family:'Juache',sans-serif;font-size:18px;line-height:1.2;">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0">
+        <div class="min-w-0">
+          <h1 class="text-slate-800 tracking-tight flex items-center gap-1.5 truncate"
+            style="font-family:'Juache',sans-serif;font-size:clamp(14px, 3.8vw, 18px);line-height:1.2;">
             과학 형성평가 관리 시스템
           </h1>
-          <p class="text-xs text-slate-400 font-medium tracking-normal" style="font-size:11px;">
+          <p class="text-xs text-slate-400 font-medium tracking-normal truncate" style="font-size:10px;">
             MINARI STUDIO · Science Assessment
           </p>
         </div>
       </div>
       <!-- Right: Action Buttons -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         <span id="sync-txt" class="text-xs text-slate-400 hidden sm:inline font-medium">대기 중</span>
         <button id="manual-sync-btn"
-          class="abtn text-xs flex items-center gap-1.5 bg-teal-50 border-teal-200 text-teal-800 hover:bg-teal-100"
+          class="abtn text-xs flex items-center gap-1 bg-teal-50 border-teal-200 text-teal-800 hover:bg-teal-100 flex-shrink-0"
+          style="padding: 5px 9px; font-size: 11px; min-height: 30px; white-space: nowrap;"
           type="button">
-          ☁ 구글시트 동기화
+          ☁ 동기화
         </button>
       </div>
     </header>
 
     <!-- HERO / CENTER TITLE SECTION -->
-    <section class="text-center my-6">
-      <div class="inline-flex items-center justify-center gap-3 mb-2">
-        <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-11 h-11 object-contain flex-shrink-0">
-        <h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight"
-          style="font-family:'BcCardFont',sans-serif;font-weight:700;font-size:28px;">
+    <section class="text-center my-4 sm:my-6 px-2">
+      <div class="inline-flex items-center justify-center gap-2 sm:gap-3 mb-1.5">
+        <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-8 h-8 sm:w-11 sm:h-11 object-contain flex-shrink-0">
+        <h2 class="font-black text-slate-800 tracking-tight"
+          style="font-family:'BcCardFont',sans-serif;font-weight:700;font-size:clamp(20px, 5.5vw, 28px);white-space:nowrap;">
           과학 형성평가 관리 시스템
         </h2>
       </div>
-      <p class="text-sm text-slate-500 max-w-md mx-auto">반별·평가별 1~3차 평가 및 최종 과제 제출 현황을 한눈에 관리하세요.</p>
+      <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">과제 제출 현황을 한 번에 관리하세요.</p>
     </section>
 
     <!-- SUMMARY CARDS -->
@@ -1028,7 +1032,8 @@
                 <label class="block text-sm font-semibold mb-1.5" for="sheets-url">Apps Script 웹앱 URL</label>
                 <input id="sheets-url" class="fc" type="url" placeholder="https://script.google.com/macros/s/.../exec">
                 <p class="text-xs text-teal-800 bg-teal-50 border border-teal-200 rounded-md p-2 mt-2 leading-relaxed">
-                  💡 <strong>기기 간 연동 안내:</strong> 스마트폰이나 다른 PC에서도 동일하게 연동하여 사용하시려면, 해당 기기에서도 이 웹앱 URL을 최초 1회 입력 및 저장해 주세요. (한 번만 등록하면 이후 항상 자동 연동됩니다)
+                  💡 <strong>기기 간 연동 안내:</strong> 스마트폰이나 다른 PC에서도 동일하게 연동하여 사용하시려면, 해당 기기에서도 이 웹앱 URL을 최초 1회 입력 및 저장해
+                  주세요. (한 번만 등록하면 이후 항상 자동 연동됩니다)
                 </p>
               </div>
               <div class="flex flex-wrap gap-2 items-center">
@@ -1122,10 +1127,11 @@
     const EKEY = 'sci_evals_v3', SKEY = 'sci_settings_v3', CKEY = 'sci_eval_ctr_v3', DKEY = 'sci_students_v3', CLSKEY = 'sci_class_order_v3';
 
     // LOCAL STORAGE FALLBACK FOR DATASDK
+    let localData = [];
+    try { localData = JSON.parse(localStorage.getItem(DKEY)) || []; } catch (e) { localData = []; }
+    let listeners = [];
+    
     if (!window.dataSdk) {
-      let localData = [];
-      try { localData = JSON.parse(localStorage.getItem(DKEY)) || []; } catch (e) { localData = []; }
-      let listeners = [];
       window.dataSdk = {
         async init({ onDataChanged }) {
           if (onDataChanged) {
@@ -1155,8 +1161,52 @@
           try { localStorage.setItem(DKEY, JSON.stringify(localData)); } catch (e) { }
           listeners.forEach(cb => cb(localData));
           return { isOk: true };
+        },
+        setAll(items) {
+          localData = [...items];
+          try { localStorage.setItem(DKEY, JSON.stringify(localData)); } catch (e) { }
+          listeners.forEach(cb => cb(localData));
         }
       };
+    } else {
+      window.dataSdk.setAll = function(items) {
+        localData = [...items];
+        try { localStorage.setItem(DKEY, JSON.stringify(localData)); } catch (e) { }
+        listeners.forEach(cb => cb(localData));
+      };
+    }
+
+    // JSONP 통신 헬퍼 (모바일 / PC 브라우저 CORS 문제 100% 해결)
+    function fetchJsonp(url) {
+      return new Promise((resolve, reject) => {
+        const cbName = 'gas_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const script = document.createElement('script');
+        const sep = url.indexOf('?') >= 0 ? '&' : '?';
+        script.src = `${url}${sep}callback=${cbName}&_t=${Date.now()}`;
+        
+        let timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('구글 시트 응답 시간 초과 (15초)'));
+        }, 15000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          if (script.parentNode) script.parentNode.removeChild(script);
+          delete window[cbName];
+        }
+
+        window[cbName] = function(data) {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error('구글 시트 연결 실패. URL 및 배포 권한을 확인하세요.'));
+        };
+
+        document.body.appendChild(script);
+      });
     }
 
     const SCRIPT_TPL = `function doPost(e) {
@@ -1232,7 +1282,7 @@ function doGet(e) {
       var sh = sheets[i];
       var name = sh.getName();
       var values = sh.getDataRange().getValues();
-      if (values.length > 1) {
+      if (values && values.length > 1) {
         var rows = [];
         for (var r = 1; r < values.length; r++) {
           var row = values[r];
@@ -1253,13 +1303,21 @@ function doGet(e) {
         result.sheets.push({ evalName: name, students: rows });
       }
     }
-    return ContentService.createTextOutput(
-      JSON.stringify(result)
-    ).setMimeType(ContentService.MimeType.JSON);
+    var output = JSON.stringify(result);
+    if (e && e.parameter && e.parameter.callback) {
+      return ContentService.createTextOutput(e.parameter.callback + '(' + output + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(output)
+      .setMimeType(ContentService.MimeType.JSON);
   } catch(err) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ status: "error", error: err.toString() })
-    ).setMimeType(ContentService.MimeType.JSON);
+    var errOut = JSON.stringify({ status: "error", error: err.toString() });
+    if (e && e.parameter && e.parameter.callback) {
+      return ContentService.createTextOutput(e.parameter.callback + '(' + errOut + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(errOut)
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }`;
 
@@ -1308,29 +1366,50 @@ function doGet(e) {
       const f = ef(id);
       const students = [...S.records].sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999)).map(s => ({ class_name: s.class_name, student_number: s.student_number || '', student_name: s.student_name, a1: s[f.a1] || '', a2: s[f.a2] || '', a3: s[f.a3] || '', final: Boolean(s[f.final]) }));
       const body = JSON.stringify({ evalName: ev.name, grade: S.settings.grade || '', students });
-      try { document.getElementById('sync-txt').textContent = '동기화 중...'; await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body }); document.getElementById('sync-txt').textContent = '동기화 완료'; toast('구글 시트에 저장되었습니다.', 'ok'); }
-      catch { document.getElementById('sync-txt').textContent = '동기화 실패'; toast('구글 시트 동기화 실패', 'err'); }
+      try { 
+        document.getElementById('sync-txt').textContent = '동기화 중...'; 
+        await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body }); 
+        document.getElementById('sync-txt').textContent = '동기화 완료'; 
+        toast('구글 시트에 저장되었습니다.', 'ok'); 
+      }
+      catch { 
+        document.getElementById('sync-txt').textContent = '동기화 실패'; 
+        toast('구글 시트 동기화 실패', 'err'); 
+      }
     }
     function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 2500); }
-    
-    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동)
+
+    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - JSONP 지원)
     async function loadFromSheets() {
       if (!S.settings.sheetsUrl) return;
       try {
-        document.getElementById('sync-txt').textContent = '시트 로딩 중...';
-        const res = await fetch(S.settings.sheetsUrl);
-        const data = await res.json();
-        if (data && data.status === 'ok' && Array.isArray(data.sheets) && data.sheets.length > 0) {
+        document.getElementById('sync-txt').textContent = '시트 동기화 중...';
+        
+        let data;
+        try {
+          data = await fetchJsonp(S.settings.sheetsUrl);
+        } catch (jpErr) {
+          console.warn('JSONP 실패, fetch 시도:', jpErr);
+          const res = await fetch(S.settings.sheetsUrl);
+          data = await res.json();
+        }
+
+        if (data && data.status === 'ok' && Array.isArray(data.sheets)) {
+          if (data.sheets.length === 0) {
+            document.getElementById('sync-txt').textContent = '시트 비어있음';
+            return;
+          }
+
           let updatedEvals = [...S.evaluations];
           let mergedStudents = new Map();
-          
-          // 기존 학생 맵 구성
+
+          // 기존 로컬 학생 유지
           S.records.forEach(r => {
             mergedStudents.set(r.class_name + '|' + (r.student_name || '').trim(), { ...r });
           });
 
+          // 구글 시트의 모든 평가 탭과 데이터 병합
           data.sheets.forEach(sheetData => {
-            // 시트(평가) 이름 동기화
             let ev = updatedEvals.find(e => e.name === sheetData.evalName);
             if (!ev) {
               ev = { id: nxtId(), name: sheetData.evalName, createdAt: new Date().toISOString() };
@@ -1338,7 +1417,6 @@ function doGet(e) {
             }
             const f = ef(ev.id);
 
-            // 학생 데이터 병합
             (sheetData.students || []).forEach(s => {
               const key = s.class_name + '|' + (s.student_name || '').trim();
               let cur = mergedStudents.get(key);
@@ -1361,23 +1439,36 @@ function doGet(e) {
 
           S.evaluations = updatedEvals;
           saveEvals(S.evaluations);
-          const studentList = Array.from(mergedStudents.values());
-          try { localStorage.setItem(DKEY, JSON.stringify(studentList)); } catch(e){}
-          S.records = studentList.sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999) || a.student_name.localeCompare(b.student_name, 'ko'));
+          
+          const studentList = Array.from(mergedStudents.values()).sort((a, b) => 
+            a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || 
+            (a.student_number || 999) - (b.student_number || 999) || 
+            a.student_name.localeCompare(b.student_name, 'ko')
+          );
+
+          if (window.dataSdk && window.dataSdk.setAll) {
+            window.dataSdk.setAll(studentList);
+          } else {
+            try { localStorage.setItem(DKEY, JSON.stringify(studentList)); } catch (e) { }
+          }
+          
+          S.records = studentList;
           refreshAll();
           document.getElementById('sync-txt').textContent = '동기화 완료';
-          toast('구글 시트에서 최신 데이터를 동기화했습니다.', 'ok');
+          toast('구글 시트의 전체 학생 명단과 결과를 동기화했습니다.', 'ok');
         }
       } catch (e) {
-        document.getElementById('sync-txt').textContent = '동기화 대기';
+        console.error('loadFromSheets error:', e);
+        document.getElementById('sync-txt').textContent = '동기화 실패';
+        toast('구글 시트 연결 실패: URL 확인 및 스크립트 새 배포가 필요합니다.', 'err');
       }
     }
 
-    async function syncAll() { 
-      if (!S.settings.sheetsUrl) { toast('Apps Script URL을 먼저 설정하세요.', 'err'); return; } 
-      for (const ev of S.evaluations) await syncEval(ev.id); 
+    async function syncAll() {
+      if (!S.settings.sheetsUrl) { toast('Apps Script URL을 먼저 설정하세요.', 'err'); return; }
+      for (const ev of S.evaluations) await syncEval(ev.id);
       await loadFromSheets();
-      toast('구글 시트 전체 동기화 완료.', 'ok'); 
+      toast('구글 시트 전체 동기화 완료.', 'ok');
     }
 
     // DATA UPDATE
@@ -1720,12 +1811,12 @@ function doGet(e) {
       document.getElementById('hide-pass-btn').addEventListener('click', () => { S.hidePassedInEval = !S.hidePassedInEval; renderEvalActions(); renderEvalStudents(); });
       document.getElementById('bulk-pass-btn').addEventListener('click', () => bulkPass1st());
       document.getElementById('add-eval-form').addEventListener('submit', e => { e.preventDefault(); const ni = document.getElementById('new-eval-name'), name = ni.value.trim(); if (!name) { document.getElementById('eval-form-msg').textContent = '평가 이름을 입력하세요.'; return; } const nev = { id: nxtId(), name, createdAt: new Date().toISOString() }; S.evaluations.push(nev); saveEvals(S.evaluations); ni.value = ''; document.getElementById('eval-form-msg').textContent = `"${name}" 추가 완료.`; renderEvalMng(); renderChartEtabs(); renderAttnEtabs(); toast('"' + name + '" 평가 추가됨', 'ok'); });
-      document.getElementById('save-cfg-btn').addEventListener('click', () => { 
-        S.settings.grade = document.getElementById('grade-in').value.trim(); 
-        S.settings.sheetsUrl = document.getElementById('sheets-url').value.trim(); 
-        saveCfg(S.settings); 
-        document.getElementById('cfg-msg').textContent = '설정 저장 완료.'; 
-        toast('설정 저장 완료. 구글 시트와 연결을 확인합니다.', 'ok'); 
+      document.getElementById('save-cfg-btn').addEventListener('click', () => {
+        S.settings.grade = document.getElementById('grade-in').value.trim();
+        S.settings.sheetsUrl = document.getElementById('sheets-url').value.trim();
+        saveCfg(S.settings);
+        document.getElementById('cfg-msg').textContent = '설정 저장 완료.';
+        toast('설정 저장 완료. 구글 시트와 연결을 확인합니다.', 'ok');
         if (S.settings.sheetsUrl) loadFromSheets();
       });
       document.getElementById('sync-all-btn').addEventListener('click', () => syncAll());
