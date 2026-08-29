@@ -1179,10 +1179,14 @@
     // JSONP 통신 헬퍼 (모바일 / PC 브라우저 CORS 문제 100% 해결)
     function fetchJsonp(url) {
       return new Promise((resolve, reject) => {
+        if (!url || !url.startsWith('https://script.google.com/macros/s/')) {
+          reject(new Error('올바른 Apps Script 웹앱 URL이 아닙니다.'));
+          return;
+        }
         const cbName = 'gas_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
         const script = document.createElement('script');
-        const sep = url.indexOf('?') >= 0 ? '&' : '?';
-        script.src = `${url}${sep}callback=${cbName}&_t=${Date.now()}`;
+        const cleanUrl = url.split('?')[0];
+        script.src = `${cleanUrl}?callback=${cbName}&_t=${Date.now()}`;
         
         let timer = setTimeout(() => {
           cleanup();
@@ -1202,7 +1206,7 @@
 
         script.onerror = function() {
           cleanup();
-          reject(new Error('구글 시트 연결 실패. URL 및 배포 권한을 확인하세요.'));
+          reject(new Error('구글 시트 연결 실패. 배포 권한(모든 사용자) 및 최신 스크립트 적용 여부를 확인하세요.'));
         };
 
         document.body.appendChild(script);
