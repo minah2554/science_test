@@ -1383,7 +1383,7 @@ function doGet(e) {
     }
     function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 2500); }
 
-    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - JSONP 지원)
+    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - 다중 기기 완벽 동기화)
     async function loadFromSheets() {
       if (!S.settings.sheetsUrl) return;
       try {
@@ -1398,53 +1398,61 @@ function doGet(e) {
           data = await res.json();
         }
 
-        if (data && data.status === 'ok' && Array.isArray(data.sheets)) {
-          if (data.sheets.length === 0) {
-            document.getElementById('sync-txt').textContent = '시트 비어있음';
-            return;
+        if (data && data.status === 'ok' && Array.isArray(data.sheets) && data.sheets.length > 0) {
+          // 1. 구글 시트의 탭들로 평가 목록을 완벽하게 재구성 (기기 간 평가 ID 일치 보장)
+          const syncedEvals = data.sheets.map((sh, idx) => ({
+            id: idx,
+            name: sh.evalName,
+            createdAt: new Date().toISOString()
+          }));
+          S.evaluations = syncedEvals;
+          saveEvals(S.evaluations);
+          
+          if (S.selectedEvalId === null || !syncedEvals.some(e => e.id === S.selectedEvalId)) {
+            S.selectedEvalId = syncedEvals[0]?.id ?? 0;
+          }
+          if (S.dashEvalId === null || !syncedEvals.some(e => e.id === S.dashEvalId)) {
+            S.dashEvalId = syncedEvals[0]?.id ?? 0;
           }
 
-          let updatedEvals = [...S.evaluations];
-          let mergedStudents = new Map();
+          // 2. 학생 목록 및 각 평가별 1~3차 결과, 최종제출 여부 병합
+          let studentMap = new Map();
 
-          // 기존 로컬 학생 유지
+          // 기존 로컬 학생 데이터 유지 (ID 보존을 위해)
           S.records.forEach(r => {
-            mergedStudents.set(r.class_name + '|' + (r.student_name || '').trim(), { ...r });
+            const k = (r.class_name || '').trim() + '|' + (r.student_name || '').trim();
+            studentMap.set(k, { ...r });
           });
 
-          // 구글 시트의 모든 평가 탭과 데이터 병합
-          data.sheets.forEach(sheetData => {
-            let ev = updatedEvals.find(e => e.name === sheetData.evalName);
-            if (!ev) {
-              ev = { id: nxtId(), name: sheetData.evalName, createdAt: new Date().toISOString() };
-              updatedEvals.push(ev);
-            }
-            const f = ef(ev.id);
-
+          // 구글 시트의 모든 평가 시트 데이터 순회
+          data.sheets.forEach((sheetData, sIdx) => {
+            const f = ef(sIdx);
             (sheetData.students || []).forEach(s => {
-              const key = s.class_name + '|' + (s.student_name || '').trim();
-              let cur = mergedStudents.get(key);
-              if (!cur) {
-                cur = {
-                  __backendId: 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                  class_name: s.class_name,
+              const cn = (s.class_name || '').trim();
+              const snm = (s.student_name || '').trim();
+              if (!snm) return;
+              const k = cn + '|' + snm;
+              let student = studentMap.get(k);
+              if (!student) {
+                student = {
+                  __backendId: 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
+                  class_name: cn || '1반',
                   student_number: s.student_number,
-                  student_name: s.student_name,
+                  student_name: snm,
                   created_at: new Date().toISOString()
                 };
-                mergedStudents.set(key, cur);
+                studentMap.set(k, student);
               }
-              if (s.a1 && s.a1 !== '미체크') cur[f.a1] = s.a1;
-              if (s.a2 && s.a2 !== '미체크') cur[f.a2] = s.a2;
-              if (s.a3 && s.a3 !== '미체크') cur[f.a3] = s.a3;
-              if (s.final !== undefined) cur[f.final] = s.final;
+              // 1차, 2차, 3차 통과/미통과 결과 반영
+              student[f.a1] = (s.a1 && s.a1 !== '미체크') ? s.a1 : '';
+              student[f.a2] = (s.a2 && s.a2 !== '미체크') ? s.a2 : '';
+              student[f.a3] = (s.a3 && s.a3 !== '미체크') ? s.a3 : '';
+              // 최종 과제 제출 여부 반영
+              student[f.final] = Boolean(s.final);
             });
           });
 
-          S.evaluations = updatedEvals;
-          saveEvals(S.evaluations);
-          
-          const studentList = Array.from(mergedStudents.values()).sort((a, b) => 
+          const studentList = Array.from(studentMap.values()).sort((a, b) => 
             a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || 
             (a.student_number || 999) - (b.student_number || 999) || 
             a.student_name.localeCompare(b.student_name, 'ko')
@@ -1459,12 +1467,12 @@ function doGet(e) {
           S.records = studentList;
           refreshAll();
           document.getElementById('sync-txt').textContent = '동기화 완료';
-          toast('구글 시트의 전체 학생 명단과 결과를 동기화했습니다.', 'ok');
+          toast('구글 시트의 학생 명단 및 1~3차 결과가 완벽하게 동기화되었습니다.', 'ok');
         }
       } catch (e) {
         console.error('loadFromSheets error:', e);
         document.getElementById('sync-txt').textContent = '동기화 실패';
-        toast('구글 시트 연결 실패: URL 확인 및 스크립트 새 배포가 필요합니다.', 'err');
+        toast('구글 시트 동기화 실패: URL 및 배포 권한을 확인하세요.', 'err');
       }
     }
 
