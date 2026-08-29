@@ -963,19 +963,22 @@
           </div>
           <div class="surface bg-white p-5">
             <h2 class="text-lg font-bold text-slate-800 mb-1">구글 시트 연동 설정</h2>
-            <p class="text-sm text-slate-500 mb-4">Apps Script URL을 설정하면 평가 결과가 자동 저장됩니다.</p>
+            <p class="text-sm text-slate-500 mb-4">Apps Script URL을 설정하면 평가 결과가 구글 시트와 실시간 동기화됩니다.</p>
             <div class="space-y-4">
               <div><label class="block text-sm font-semibold mb-1.5" for="grade-in">학년</label><input id="grade-in"
                   class="fc" type="text" maxlength="10" placeholder="예: 3">
                 <p class="text-xs text-slate-400 mt-1">구글 시트에 기록될 학년 정보</p>
               </div>
-              <div><label class="block text-sm font-semibold mb-1.5" for="sheets-url">Apps Script 웹앱 URL</label><input
-                  id="sheets-url" class="fc" type="url" placeholder="https://script.google.com/macros/s/...">
-                <p class="text-xs text-slate-400 mt-1">구글 시트 자동 저장을 위한 URL</p>
+              <div>
+                <label class="block text-sm font-semibold mb-1.5" for="sheets-url">Apps Script 웹앱 URL</label>
+                <input id="sheets-url" class="fc" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+                <p class="text-xs text-teal-800 bg-teal-50 border border-teal-200 rounded-md p-2 mt-2 leading-relaxed">
+                  💡 <strong>기기 간 연동 안내:</strong> 스마트폰이나 다른 PC에서도 동일하게 연동하여 사용하시려면, 해당 기기에서도 이 웹앱 URL을 최초 1회 입력 및 저장해 주세요. (한 번만 등록하면 이후 항상 자동 연동됩니다)
+                </p>
               </div>
               <div class="flex flex-wrap gap-2 items-center">
                 <button id="save-cfg-btn" class="sbtn bg-teal-700 text-white" type="button">설정 저장</button>
-                <button id="sync-all-btn" class="abtn" type="button">☁ 전체 동기화</button>
+                <button id="sync-all-btn" class="abtn" type="button">☁ 구글 시트 양방향 동기화</button>
                 <p id="cfg-msg" class="msg" aria-live="polite"></p>
               </div>
             </div>
@@ -987,7 +990,7 @@
               <p class="text-xs text-slate-500 mb-2">1. <a
                   href="https://docs.google.com/spreadsheets/d/15bNcK2m-tBD_E0SK1ZKmzZOLBae0guRGP2I7laMUOOw/edit"
                   target="_blank" class="text-teal-700 underline">구글 시트 열기</a> → 2. 확장프로그램→Apps Script → 3. 코드 붙여넣기 → 4.
-                배포→새 배포→웹앱→액세스:모두 → 5. URL 위에 입력</p>
+                배포→새 배포→웹앱(액세스: 모든 사용자) → 5. 배포된 URL 위에 입력 후 [설정 저장]</p>
               <pre id="script-code" class="codeblk"></pre>
             </div>
           </div>
@@ -1060,7 +1063,7 @@
   </template>
 
   <script>
-    const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwddh7y3igBfqKeFoUpXtpJjeI_yh0kKqtSrltmM73WFJbRLhQkGX_8jI_WPqHqirww/exec';
+    const DEFAULT_SHEETS_URL = '';
     const EKEY = 'sci_evals_v3', SKEY = 'sci_settings_v3', CKEY = 'sci_eval_ctr_v3', DKEY = 'sci_students_v3', CLSKEY = 'sci_class_order_v3';
 
     // LOCAL STORAGE FALLBACK FOR DATASDK
@@ -1142,7 +1145,13 @@
     headerRange.setBackground('#0f766e');
     headerRange.setFontColor('#ffffff');
     headerRange.setFontWeight('bold');
+    
     sheet.autoResizeColumns(1, headers[0].length);
+    var minWidths = [65, 75, 65, 110, 85, 85, 85, 95, 160];
+    for (var i = 0; i < minWidths.length; i++) {
+      var curW = sheet.getColumnWidth(i + 1);
+      sheet.setColumnWidth(i + 1, Math.max(curW + 15, minWidths[i]));
+    }
     
     lock.releaseLock();
     return ContentService.createTextOutput(
@@ -1157,9 +1166,46 @@
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput(
-    JSON.stringify({ status: "ok", message: "과학 형성평가 Apps Script 서버가 정상 작동 중입니다." })
-  ).setMimeType(ContentService.MimeType.JSON);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = ss.getSheets();
+    var result = {
+      status: "ok",
+      sheets: []
+    };
+    for (var i = 0; i < sheets.length; i++) {
+      var sh = sheets[i];
+      var name = sh.getName();
+      var values = sh.getDataRange().getValues();
+      if (values.length > 1) {
+        var rows = [];
+        for (var r = 1; r < values.length; r++) {
+          var row = values[r];
+          if (row[3]) {
+            rows.push({
+              grade: String(row[0] || ''),
+              class_name: String(row[1] || ''),
+              student_number: Number(row[2]) || undefined,
+              student_name: String(row[3] || ''),
+              a1: String(row[4] || ''),
+              a2: String(row[5] || ''),
+              a3: String(row[6] || ''),
+              final: row[7] === '제출완료' || row[7] === true,
+              syncTime: String(row[8] || '')
+            });
+          }
+        }
+        result.sheets.push({ evalName: name, students: rows });
+      }
+    }
+    return ContentService.createTextOutput(
+      JSON.stringify(result)
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ status: "error", error: err.toString() })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 }`;
 
     // STATE
@@ -1211,7 +1257,73 @@ function doGet(e) {
       catch { document.getElementById('sync-txt').textContent = '동기화 실패'; toast('구글 시트 동기화 실패', 'err'); }
     }
     function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 2500); }
-    async function syncAll() { if (!S.settings.sheetsUrl) { toast('Apps Script URL을 먼저 설정하세요.', 'err'); return; } for (const ev of S.evaluations) await syncEval(ev.id); toast('전체 동기화 완료.', 'ok'); }
+    
+    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동)
+    async function loadFromSheets() {
+      if (!S.settings.sheetsUrl) return;
+      try {
+        document.getElementById('sync-txt').textContent = '시트 로딩 중...';
+        const res = await fetch(S.settings.sheetsUrl);
+        const data = await res.json();
+        if (data && data.status === 'ok' && Array.isArray(data.sheets) && data.sheets.length > 0) {
+          let updatedEvals = [...S.evaluations];
+          let mergedStudents = new Map();
+          
+          // 기존 학생 맵 구성
+          S.records.forEach(r => {
+            mergedStudents.set(r.class_name + '|' + (r.student_name || '').trim(), { ...r });
+          });
+
+          data.sheets.forEach(sheetData => {
+            // 시트(평가) 이름 동기화
+            let ev = updatedEvals.find(e => e.name === sheetData.evalName);
+            if (!ev) {
+              ev = { id: nxtId(), name: sheetData.evalName, createdAt: new Date().toISOString() };
+              updatedEvals.push(ev);
+            }
+            const f = ef(ev.id);
+
+            // 학생 데이터 병합
+            (sheetData.students || []).forEach(s => {
+              const key = s.class_name + '|' + (s.student_name || '').trim();
+              let cur = mergedStudents.get(key);
+              if (!cur) {
+                cur = {
+                  __backendId: 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                  class_name: s.class_name,
+                  student_number: s.student_number,
+                  student_name: s.student_name,
+                  created_at: new Date().toISOString()
+                };
+                mergedStudents.set(key, cur);
+              }
+              if (s.a1 && s.a1 !== '미체크') cur[f.a1] = s.a1;
+              if (s.a2 && s.a2 !== '미체크') cur[f.a2] = s.a2;
+              if (s.a3 && s.a3 !== '미체크') cur[f.a3] = s.a3;
+              if (s.final !== undefined) cur[f.final] = s.final;
+            });
+          });
+
+          S.evaluations = updatedEvals;
+          saveEvals(S.evaluations);
+          const studentList = Array.from(mergedStudents.values());
+          try { localStorage.setItem(DKEY, JSON.stringify(studentList)); } catch(e){}
+          S.records = studentList.sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999) || a.student_name.localeCompare(b.student_name, 'ko'));
+          refreshAll();
+          document.getElementById('sync-txt').textContent = '동기화 완료';
+          toast('구글 시트에서 최신 데이터를 동기화했습니다.', 'ok');
+        }
+      } catch (e) {
+        document.getElementById('sync-txt').textContent = '동기화 대기';
+      }
+    }
+
+    async function syncAll() { 
+      if (!S.settings.sheetsUrl) { toast('Apps Script URL을 먼저 설정하세요.', 'err'); return; } 
+      for (const ev of S.evaluations) await syncEval(ev.id); 
+      await loadFromSheets();
+      toast('구글 시트 전체 동기화 완료.', 'ok'); 
+    }
 
     // DATA UPDATE
     async function updField(bid, field, val, evalId) {
@@ -1553,7 +1665,14 @@ function doGet(e) {
       document.getElementById('hide-pass-btn').addEventListener('click', () => { S.hidePassedInEval = !S.hidePassedInEval; renderEvalActions(); renderEvalStudents(); });
       document.getElementById('bulk-pass-btn').addEventListener('click', () => bulkPass1st());
       document.getElementById('add-eval-form').addEventListener('submit', e => { e.preventDefault(); const ni = document.getElementById('new-eval-name'), name = ni.value.trim(); if (!name) { document.getElementById('eval-form-msg').textContent = '평가 이름을 입력하세요.'; return; } const nev = { id: nxtId(), name, createdAt: new Date().toISOString() }; S.evaluations.push(nev); saveEvals(S.evaluations); ni.value = ''; document.getElementById('eval-form-msg').textContent = `"${name}" 추가 완료.`; renderEvalMng(); renderChartEtabs(); renderAttnEtabs(); toast('"' + name + '" 평가 추가됨', 'ok'); });
-      document.getElementById('save-cfg-btn').addEventListener('click', () => { S.settings.grade = document.getElementById('grade-in').value.trim(); S.settings.sheetsUrl = document.getElementById('sheets-url').value.trim(); saveCfg(S.settings); document.getElementById('cfg-msg').textContent = '설정 저장 완료.'; toast('설정 저장 완료', 'ok'); });
+      document.getElementById('save-cfg-btn').addEventListener('click', () => { 
+        S.settings.grade = document.getElementById('grade-in').value.trim(); 
+        S.settings.sheetsUrl = document.getElementById('sheets-url').value.trim(); 
+        saveCfg(S.settings); 
+        document.getElementById('cfg-msg').textContent = '설정 저장 완료.'; 
+        toast('설정 저장 완료. 구글 시트와 연결을 확인합니다.', 'ok'); 
+        if (S.settings.sheetsUrl) loadFromSheets();
+      });
       document.getElementById('sync-all-btn').addEventListener('click', () => syncAll());
       document.getElementById('copy-code-btn').addEventListener('click', () => { navigator.clipboard.writeText(SCRIPT_TPL).then(() => toast('코드 복사 완료', 'ok')); });
 
@@ -1704,6 +1823,7 @@ function doGet(e) {
         }
       });
       if (!res.isOk) document.getElementById('form-msg').textContent = '저장 기능 초기화 실패. 새로고침 해주세요.';
+      if (S.settings.sheetsUrl) loadFromSheets();
     }
 
     document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); setupEvents(); initApp(); });
