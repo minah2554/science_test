@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>과학 형성평가 관리 시스템 | MINARI STUDIO</title>
   <meta name="description" content="과학 형성평가 관리 – 반별·평가별 1~3차 결과 관리">
   <link rel="icon" type="image/png" href="./favicon.png">
@@ -58,6 +58,12 @@
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
     }
 
     body {
@@ -93,8 +99,8 @@
     }
 
     .sum-card {
-      min-height: 110px;
-      padding: 16px;
+      min-height: 100px;
+      padding: 14px 16px;
       border: 1px solid var(--line);
       border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
@@ -104,15 +110,17 @@
     .sum-num {
       font-family: 'BcCardFont', 'GoyangIlsan', sans-serif;
       font-weight: 700;
-      line-height: 1;
+      line-height: 1.1;
       letter-spacing: -.02em;
     }
 
     .vtab {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 9px 16px;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 8px 16px;
       border: 1px solid #cbd5e1;
       border-radius: 999px;
       background: #fff;
@@ -122,6 +130,7 @@
       cursor: pointer;
       transition: .15s;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .vtab:hover {
@@ -137,18 +146,19 @@
     }
 
     .ctab {
-      min-height: 32px;
-      padding: 4px 12px;
+      min-height: 34px;
+      padding: 6px 13px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       background: #fff;
       color: #334155;
-      font-size: .8rem;
+      font-size: .82rem;
       font-weight: 700;
       cursor: pointer;
       transition: .15s;
       white-space: nowrap;
       user-select: none;
+      flex-shrink: 0;
     }
 
     .ctab:hover {
@@ -181,7 +191,7 @@
       align-items: center;
       gap: 5px;
       min-height: 34px;
-      padding: 4px 14px;
+      padding: 5px 14px;
       border: 1px solid #cbd5e1;
       border-radius: 999px;
       background: #fff;
@@ -191,6 +201,7 @@
       cursor: pointer;
       transition: .15s;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .etab:hover {
@@ -216,13 +227,14 @@
     }
 
     .fc {
-      min-height: 40px;
+      min-height: 42px;
       width: 100%;
       padding: 0 12px;
       border: 1px solid #cbd5e1;
       border-radius: 10px;
       background: #fff;
       color: var(--ink);
+      font-size: 0.9rem;
     }
 
     textarea.fc {
@@ -232,13 +244,17 @@
     }
 
     .sbtn {
-      min-height: 40px;
-      padding: 0 16px;
+      min-height: 42px;
+      padding: 0 18px;
       border: 0;
       border-radius: 10px;
       font-weight: 700;
+      font-size: 0.88rem;
       cursor: pointer;
       transition: .15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .sbtn:hover:not(:disabled) {
@@ -296,6 +312,7 @@
       max-height: 480px;
       overflow-y: auto;
       padding-right: 2px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .ascroll::-webkit-scrollbar {
@@ -308,7 +325,7 @@
     }
 
     .ai {
-      padding: 9px 0;
+      padding: 10px 0;
       border-bottom: 1px solid #f1f5f9;
     }
 
@@ -317,13 +334,13 @@
     }
 
     .qsel {
-      min-height: 26px;
-      min-width: 64px;
-      padding: 0 4px;
+      min-height: 32px;
+      min-width: 66px;
+      padding: 0 6px;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 7px;
       background: #fff;
-      font-size: .74rem;
+      font-size: .78rem;
       font-weight: 600;
       cursor: pointer;
     }
@@ -344,11 +361,12 @@
       overflow-x: auto;
       border: 1px solid var(--line);
       border-radius: 14px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .stbl {
       width: 100%;
-      min-width: 740px;
+      min-width: 680px;
       border-collapse: collapse;
       background: #fff;
     }
@@ -374,13 +392,14 @@
     }
 
     .asel {
-      min-height: 32px;
-      width: 80px;
-      padding: 0 4px;
+      min-height: 36px;
+      width: 100%;
+      max-width: 88px;
+      padding: 0 6px;
       border: 1px solid #cbd5e1;
       border-radius: 7px;
       background: #fff;
-      font-size: .8rem;
+      font-size: .82rem;
       font-weight: 600;
       cursor: pointer;
     }
@@ -401,7 +420,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 70px;
+      min-width: 68px;
       padding: 3px 8px;
       border-radius: 99px;
       font-size: .74rem;
@@ -430,16 +449,19 @@
     }
 
     .abtn {
-      min-height: 32px;
-      padding: 0 11px;
+      min-height: 34px;
+      padding: 0 12px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       background: #fff;
       color: #334155;
-      font-size: .78rem;
+      font-size: .8rem;
       font-weight: 700;
       cursor: pointer;
       transition: .13s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .abtn:hover {
@@ -519,19 +541,19 @@
 
     .toast {
       position: fixed;
-      bottom: 16px;
+      bottom: 20px;
       right: 16px;
-      padding: 10px 16px;
+      padding: 11px 18px;
       border-radius: 12px;
       background: #0f172a;
       color: #fff;
-      font-size: .82rem;
+      font-size: .84rem;
       font-weight: 600;
       z-index: 9999;
       transform: translateY(70px);
       opacity: 0;
       transition: transform .22s, opacity .22s;
-      max-width: 300px;
+      max-width: 90vw;
       pointer-events: none;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
@@ -556,10 +578,21 @@
       align-items: center;
     }
 
+    .tbar.scrollable {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tbar.scrollable::-webkit-scrollbar {
+      display: none;
+    }
+
     /* MINARI STUDIO FOOTER */
     .footer {
       margin-top: 40px;
-      padding: 24px 16px 36px;
+      padding: 24px 16px max(36px, env(safe-area-inset-bottom));
       border-top: 1px solid var(--line);
       background: rgba(255, 255, 255, .7);
       backdrop-filter: blur(8px);
@@ -616,16 +649,21 @@
 
     @media(max-width:640px) {
       body {
-        padding: 12px;
+        padding: 10px;
       }
 
       .sum-card {
-        min-height: 90px;
+        min-height: 85px;
         padding: 12px;
+      }
+
+      .sum-num {
+        font-size: 1.75rem !important;
       }
 
       .surface {
         border-radius: 14px;
+        padding: 14px !important;
       }
 
       .dt-only {
@@ -637,8 +675,25 @@
       }
 
       .vtab {
-        padding: 7px 12px;
+        padding: 7px 13px;
         font-size: .8rem;
+        min-height: 36px;
+      }
+
+      .ctab {
+        padding: 5px 10px;
+        font-size: .78rem;
+        min-height: 32px;
+      }
+
+      .etab {
+        padding: 4px 11px;
+        font-size: .78rem;
+        min-height: 32px;
+      }
+      
+      .scard {
+        padding: 12px;
       }
     }
 
@@ -704,28 +759,28 @@
     </section>
 
     <!-- SUMMARY CARDS -->
-    <section class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section class="mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
       <article class="sum-card">
         <p class="text-xs font-semibold text-slate-500">전체 학생</p>
-        <p id="sc-total" class="sum-num mt-2 text-4xl font-bold text-slate-800">0</p>
+        <p id="sc-total" class="sum-num mt-1.5 text-3xl sm:text-4xl font-bold text-slate-800">0</p>
       </article>
       <article class="sum-card">
         <p class="text-xs font-semibold text-emerald-700">통과 <span id="sc-eval-lbl"
             class="text-xs text-slate-400 font-normal"></span></p>
-        <p id="sc-pass" class="sum-num mt-2 text-4xl font-bold text-emerald-600">0</p>
+        <p id="sc-pass" class="sum-num mt-1.5 text-3xl sm:text-4xl font-bold text-emerald-600">0</p>
       </article>
       <article class="sum-card">
         <p class="text-xs font-semibold text-amber-700">진행 중</p>
-        <p id="sc-prog" class="sum-num mt-2 text-4xl font-bold text-amber-500">0</p>
+        <p id="sc-prog" class="sum-num mt-1.5 text-3xl sm:text-4xl font-bold text-amber-500">0</p>
       </article>
       <article class="sum-card">
         <p class="text-xs font-semibold text-red-700">3차 미통과</p>
-        <p id="sc-fail" class="sum-num mt-2 text-4xl font-bold text-red-500">0</p>
+        <p id="sc-fail" class="sum-num mt-1.5 text-3xl sm:text-4xl font-bold text-red-500">0</p>
       </article>
     </section>
 
     <!-- NAV TABS -->
-    <nav class="mb-4 tbar">
+    <nav class="mb-4 tbar scrollable">
       <button class="vtab on" data-view="dashboard" type="button">📊 현황 대시보드</button>
       <button class="vtab" data-view="evaluation" type="button">📋 학생 평가 목록</button>
       <button class="vtab" data-view="management" type="button">👥 학생 명단 관리</button>
