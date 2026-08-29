@@ -1221,6 +1221,26 @@
     var data = JSON.parse(contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     
+    // 시트 삭제 액션 처리
+    if (data.action === 'deleteEval') {
+      var targetSheet = ss.getSheetByName(String(data.evalName || ''));
+      if (targetSheet && ss.getSheets().length > 1) {
+        ss.deleteSheet(targetSheet);
+      }
+      lock.releaseLock();
+      return ContentService.createTextOutput(JSON.stringify({ success: true, action: 'deleted' })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 시트 이름 변경 액션 처리
+    if (data.action === 'renameEval') {
+      var oldSheet = ss.getSheetByName(String(data.oldName || ''));
+      if (oldSheet && data.newName) {
+        oldSheet.setName(String(data.newName).substring(0, 100));
+      }
+      lock.releaseLock();
+      return ContentService.createTextOutput(JSON.stringify({ success: true, action: 'renamed' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     var sheetName = String(data.evalName || '형성평가').substring(0, 100);
     var sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
@@ -1326,7 +1346,7 @@ function doGet(e) {
 }`;
 
     // STATE
-    const S = { records: [], evaluations: [], classOrder: [], selectedClass: '전체', evalClassFilter: '전체', searchTerm: '', activeView: 'dashboard', pendingUpdates: new Set(), importRows: [], selectedEvalId: null, hidePassedInEval: false, dashClassFilter: '전체', dashEvalId: null, settings: { grade: '1', sheetsUrl: DEFAULT_SHEETS_URL } };
+    const S = { records: [], evaluations: [], classOrder: [], selectedClass: '전체', evalClassFilter: '전체', searchTerm: '', activeView: 'dashboard', pendingUpdates: new Set(), importRows: [], selectedEvalId: 0, hidePassedInEval: false, dashClassFilter: '전체', dashEvalId: 0, settings: { grade: '1', sheetsUrl: DEFAULT_SHEETS_URL } };
 
     // STORAGE
     function loadEvals() { try { const d = JSON.parse(localStorage.getItem(EKEY)); if (d && d.length) return d; } catch { } const def = [{ id: 0, name: '1단원 형성평가', createdAt: new Date().toISOString() }]; localStorage.setItem(EKEY, JSON.stringify(def)); return def; }
@@ -1374,14 +1394,26 @@ function doGet(e) {
         document.getElementById('sync-txt').textContent = '동기화 중...'; 
         await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body }); 
         document.getElementById('sync-txt').textContent = '동기화 완료'; 
-        toast('구글 시트에 저장되었습니다.', 'ok'); 
       }
       catch { 
         document.getElementById('sync-txt').textContent = '동기화 실패'; 
-        toast('구글 시트 동기화 실패', 'err'); 
       }
     }
-    function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 2500); }
+    function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 1000); }
+
+    async function deleteSheetEval(evalName) {
+      if (!S.settings.sheetsUrl || !evalName) return;
+      try {
+        await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'deleteEval', evalName }) });
+      } catch(e){}
+    }
+
+    async function renameSheetEval(oldName, newName) {
+      if (!S.settings.sheetsUrl || !oldName || !newName) return;
+      try {
+        await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'renameEval', oldName, newName }) });
+      } catch(e){}
+    }
 
     // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - 다중 기기 완벽 동기화)
     async function loadFromSheets() {
@@ -1467,12 +1499,10 @@ function doGet(e) {
           S.records = studentList;
           refreshAll();
           document.getElementById('sync-txt').textContent = '동기화 완료';
-          toast('구글 시트의 학생 명단 및 1~3차 결과가 완벽하게 동기화되었습니다.', 'ok');
         }
       } catch (e) {
         console.error('loadFromSheets error:', e);
-        document.getElementById('sync-txt').textContent = '동기화 실패';
-        toast('구글 시트 동기화 실패: URL 및 배포 권한을 확인하세요.', 'err');
+        document.getElementById('sync-txt').textContent = '동기화 대기';
       }
     }
 
@@ -1495,11 +1525,15 @@ function doGet(e) {
     // SUMMARY CARDS
     function updSummary() {
       document.getElementById('sc-total').textContent = S.records.length;
-      const id = S.selectedEvalId ?? S.evaluations[0]?.id ?? null;
-      const ev = S.evaluations.find(e => e.id === id);
+      const id = S.dashEvalId ?? S.selectedEvalId ?? S.evaluations[0]?.id ?? 0;
+      const ev = S.evaluations.find(e => e.id === id) || S.evaluations[0];
       document.getElementById('sc-eval-lbl').textContent = ev ? `(${ev.name})` : '';
       const g = { pass: 0, progress: 0, fail: 0 };
-      if (id !== null) S.records.forEach(s => { const t = stEval(s, id).type; if (g[t] !== undefined) g[t]++; });
+      const targetId = ev ? ev.id : 0;
+      S.records.forEach(s => { 
+        const t = stEval(s, targetId).type; 
+        if (g[t] !== undefined) g[t]++; 
+      });
       document.getElementById('sc-pass').textContent = g.pass;
       document.getElementById('sc-prog').textContent = g.progress;
       document.getElementById('sc-fail').textContent = g.fail;
@@ -1650,9 +1684,33 @@ function doGet(e) {
         card.innerHTML = `<div class="flex-1 min-w-0"><div class="flex items-center gap-2 mb-0.5"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-700 text-white text-xs font-bold flex-shrink-0">${idx + 1}</span><p class="font-bold text-slate-800 text-sm truncate evnd">${esc(ev.name)}</p></div><input class="fc evni hidden mt-1" type="text" value="${esc(ev.name)}" maxlength="50" style="min-height:32px;"><p class="text-xs text-slate-400 ml-7">통과 ${passed}명 · ${new Date(ev.createdAt).toLocaleDateString('ko')}</p></div><div class="flex flex-wrap gap-1.5 flex-shrink-0"><button class="abtn evrn text-xs" type="button">이름 수정</button><button class="abtn evsv hidden text-xs" type="button">저장</button>${idx > 0 ? `<button class="abtn dbtn evdl text-xs" type="button">삭제</button>` : '<span class="text-xs text-slate-400 self-center">(기본)</span>'}</div>`;
         const nd = card.querySelector('.evnd'), ni = card.querySelector('.evni'), rb = card.querySelector('.evrn'), sb = card.querySelector('.evsv');
         rb?.addEventListener('click', () => { nd.classList.add('hidden'); ni.classList.remove('hidden'); rb.classList.add('hidden'); sb?.classList.remove('hidden'); ni.focus(); ni.select(); });
-        sb?.addEventListener('click', () => { const n = ni.value.trim(); if (!n) { toast('평가 이름을 입력하세요.', 'err'); return; } ev.name = n; saveEvals(S.evaluations); renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); toast('"' + n + '" 이름 수정 완료', 'ok'); });
+        sb?.addEventListener('click', async () => { 
+          const n = ni.value.trim(); 
+          if (!n) { toast('평가 이름을 입력하세요.', 'err'); return; } 
+          const oldName = ev.name;
+          ev.name = n; 
+          saveEvals(S.evaluations); 
+          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); 
+          toast('"' + n + '" 이름 수정 완료', 'ok'); 
+          await renameSheetEval(oldName, n);
+        });
         const db = card.querySelector('.evdl');
-        db?.addEventListener('click', () => { if (!db.classList.contains('cf')) { db.classList.add('cf'); db.textContent = '삭제 확인'; setTimeout(() => { if (db.isConnected && db.classList.contains('cf')) { db.classList.remove('cf'); db.textContent = '삭제'; } }, 3500); return; } S.evaluations = S.evaluations.filter(e => e.id !== ev.id); saveEvals(S.evaluations); if (S.selectedEvalId === ev.id) S.selectedEvalId = S.evaluations[0]?.id ?? null; if (S.dashEvalId === ev.id) S.dashEvalId = S.evaluations[0]?.id ?? null; renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); updDashboard(); toast('평가 삭제 완료', 'ok'); });
+        db?.addEventListener('click', async () => { 
+          if (!db.classList.contains('cf')) { 
+            db.classList.add('cf'); 
+            db.textContent = '삭제 확인'; 
+            setTimeout(() => { if (db.isConnected && db.classList.contains('cf')) { db.classList.remove('cf'); db.textContent = '삭제'; } }, 3500); 
+            return; 
+          } 
+          const delName = ev.name;
+          S.evaluations = S.evaluations.filter(e => e.id !== ev.id); 
+          saveEvals(S.evaluations); 
+          if (S.selectedEvalId === ev.id) S.selectedEvalId = S.evaluations[0]?.id ?? 0; 
+          if (S.dashEvalId === ev.id) S.dashEvalId = S.evaluations[0]?.id ?? 0; 
+          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); updDashboard(); 
+          toast('평가 삭제 완료', 'ok'); 
+          await deleteSheetEval(delName);
+        });
         list.appendChild(card);
       });
     }
@@ -1752,12 +1810,11 @@ function doGet(e) {
 
     // REFRESH ALL
     function refreshAll() {
-      updSummary(); renderClsFilters();
+      updDashboard();
+      renderClsFilters();
       if (S.activeView === 'management') renderRoster();
-      if (S.activeView === 'dashboard') updDashboard();
       if (S.activeView === 'evaluation') renderEvalView();
       if (S.activeView === 'eval-mng') renderEvalMng();
-      if (S.activeView !== 'dashboard') { renderChart(); renderAttnEtabs(); renderAttnCtabs(); renderAttnList(); renderClsOverview(); }
     }
 
     // BULK PASS
@@ -1971,8 +2028,8 @@ function doGet(e) {
       document.getElementById('sheets-url').value = S.settings.sheetsUrl || '';
       S.evaluations = loadEvals();
       S.classOrder = loadClassOrder();
-      S.selectedEvalId = S.evaluations[0]?.id ?? null;
-      S.dashEvalId = S.evaluations[0]?.id ?? null;
+      S.selectedEvalId = S.evaluations[0]?.id ?? 0;
+      S.dashEvalId = S.evaluations[0]?.id ?? 0;
       renderChartEtabs(); renderAttnEtabs(); renderAttnCtabs();
       const res = await window.dataSdk.init({
         onDataChanged(data) {
@@ -1982,6 +2039,18 @@ function doGet(e) {
       });
       if (!res.isOk) document.getElementById('form-msg').textContent = '저장 기능 초기화 실패. 새로고침 해주세요.';
       if (S.settings.sheetsUrl) loadFromSheets();
+
+      // 화면 포커스(복귀) 시 다른 기기 변경사항 자동 즉시 동기화
+      window.addEventListener('focus', () => {
+        if (S.settings.sheetsUrl && !document.hidden) loadFromSheets();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && S.settings.sheetsUrl) loadFromSheets();
+      });
+      // 15초 주기 백그라운드 자동 동기화
+      setInterval(() => {
+        if (S.settings.sheetsUrl && !document.hidden) loadFromSheets();
+      }, 15000);
     }
 
     document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); setupEvents(); initApp(); });
