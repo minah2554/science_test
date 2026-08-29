@@ -3,8 +3,8 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>과학 형성평가 통과 관리 시스템 | MINARI STUDIO</title>
-  <meta name="description" content="과학 형성평가 통과 관리 – 반별·평가별 1~3차 결과 관리">
+  <title>과학 형성평가 관리 시스템 | MINARI STUDIO</title>
+  <meta name="description" content="과학 형성평가 관리 – 반별·평가별 1~3차 결과 관리">
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="apple-touch-icon" href="./icon.png">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -14,22 +14,36 @@
   <script src="/_sdk/78f4024a6883f001.editing_sdk.js" integrity="sha512-5JijBqhu1bO2WHWN6CyZm84Pau82MCFCPVSKnBzLACwT41OSljts3eUyyrStRqJcWxLvdOq8SRK/JTh6l0y70Q=="></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @font-face{font-family:'BMJUA';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/BMJUA.woff') format('woff');font-weight:normal;font-display:swap;}
+    @font-face {
+      font-family: 'BcCardFont';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-07@1.1/BCcardL.woff') format('woff');
+      font-weight: 300;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'BcCardFont';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-07@1.1/BCcardB.woff') format('woff');
+      font-weight: 700;
+      font-display: swap;
+    }
     @font-face{font-family:'GoyangIlsan';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/GoyangIlsan.woff') format('woff');font-weight:normal;font-display:swap;}
     :root{--teal:#0f766e;--teal-dark:#115e59;--pass:#177245;--fail:#b63b3b;--line:#e2e8f0;--ink:#1e293b;--surface:#ffffff;}
     *{box-sizing:border-box;}
-    body{width:100%;min-height:100vh;margin:0;font-family:'Noto Sans KR','GoyangIlsan',sans-serif;color:var(--ink);background:linear-gradient(90deg,rgba(15,118,110,.03) 1px,transparent 1px),linear-gradient(rgba(15,118,110,.03) 1px,transparent 1px);background-size:24px 24px;}
+    body{width:100%;min-height:100vh;margin:0;font-family:'Noto Sans KR','BcCardFont',sans-serif;color:var(--ink);background:linear-gradient(90deg,rgba(15,118,110,.03) 1px,transparent 1px),linear-gradient(rgba(15,118,110,.03) 1px,transparent 1px);background-size:24px 24px;}
     button,input,select,textarea{font:inherit;}
     button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(15,118,110,.3);outline-offset:2px;}
     .surface{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.03);}
     .sum-card{min-height:110px;padding:16px;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.03);background:var(--surface);}
-    .sum-num{font-family:'BMJUA','GoyangIlsan',sans-serif;line-height:1;letter-spacing:-.02em;}
+    .sum-num{font-family:'BcCardFont','GoyangIlsan',sans-serif;font-weight:700;line-height:1;letter-spacing:-.02em;}
     .vtab{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#334155;font-weight:700;font-size:.85rem;cursor:pointer;transition:.15s;white-space:nowrap;}
     .vtab:hover{border-color:var(--teal);color:var(--teal);}
     .vtab.on{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 4px 12px rgba(15,118,110,.25);}
-    .ctab{min-height:32px;padding:4px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#334155;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
+    .ctab{min-height:32px;padding:4px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#334155;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;user-select:none;}
     .ctab:hover{border-color:var(--teal);color:var(--teal);}
     .ctab.on{background:var(--teal);color:#fff;border-color:var(--teal);}
+    .ctab.drag-over{border:2px dashed var(--teal);transform:scale(1.05);background:#f0fdfa;}
+    .ctab[draggable="true"]{cursor:grab;}
+    .ctab[draggable="true"]:active{cursor:grabbing;}
     .etab{display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:4px 14px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#334155;font-size:.82rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
     .etab:hover{border-color:var(--teal);color:var(--teal);}
     .etab.on{background:var(--teal);border-color:var(--teal);color:#fff;}
@@ -90,7 +104,7 @@
     .footer-in{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;}
     .f-brand{display:flex;align-items:center;gap:10px;}
     .f-brand>div{display:flex;flex-direction:column;align-items:flex-start;text-align:left;}
-    .f-wm{font-family:'BMJUA',sans-serif;font-size:15px;font-weight:700;color:var(--teal);letter-spacing:-.02em;line-height:1.2;}
+    .f-wm{font-family:'BcCardFont',sans-serif;font-weight:700;font-size:15px;color:var(--teal);letter-spacing:-.02em;line-height:1.2;}
     .f-tag{font-size:11px;color:#64748b;font-weight:500;}
     .f-legal{font-size:11px;color:#94a3b8;line-height:1.6;}
     .f-legal .sep{margin:0 6px;color:#cbd5e1;}
@@ -118,10 +132,10 @@
    <header class="surface bg-white px-4 py-3 mb-5 flex items-center justify-between gap-3">
     <!-- Left: Icon + Title + Subtitle -->
     <div class="flex items-center gap-3">
-      <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-10 h-10 object-contain rounded-xl shadow-sm border border-slate-100 flex-shrink-0">
+      <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-10 h-10 object-contain flex-shrink-0">
       <div>
-        <h1 class="text-base font-bold text-slate-800 tracking-tight flex items-center gap-1.5" style="font-family:'BMJUA',sans-serif;font-size:17px;line-height:1.2;">
-          과학 형성평가 통과 관리
+        <h1 class="text-base font-bold text-slate-800 tracking-tight flex items-center gap-1.5" style="font-family:'BcCardFont',sans-serif;font-weight:700;font-size:17px;line-height:1.2;">
+          과학 형성평가 관리 시스템
         </h1>
         <p class="text-xs text-slate-400 font-medium tracking-normal" style="font-size:11px;">
           MINARI STUDIO · Science Assessment
@@ -140,9 +154,9 @@
    <!-- HERO / CENTER TITLE SECTION -->
    <section class="text-center my-6">
     <div class="inline-flex items-center justify-center gap-3 mb-2">
-      <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-11 h-11 object-contain">
-      <h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight" style="font-family:'BMJUA',sans-serif;font-size:28px;">
-        과학 형성평가 통과 관리 시스템
+      <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-11 h-11 object-contain flex-shrink-0">
+      <h2 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight" style="font-family:'BcCardFont',sans-serif;font-weight:700;font-size:28px;">
+        과학 형성평가 관리 시스템
       </h2>
     </div>
     <p class="text-sm text-slate-500 max-w-md mx-auto">반별·평가별 1~3차 평가 및 최종 과제 제출 현황을 한눈에 관리하세요.</p>
@@ -185,7 +199,7 @@
       <!-- Attention -->
       <aside class="surface bg-white p-5 xl:col-span-2">
        <h2 class="font-bold text-slate-800 mb-0.5">확인이 필요한 학생</h2>
-       <p class="text-xs text-slate-500 mb-2">진행 중·3차 미통과 · 직접 체크 가능</p>
+       <p class="text-xs text-slate-500 mb-2">미체크 · 진행 중 · 3차 미통과 (직접 체크 가능)</p>
        <div id="attn-etabs" class="tbar mb-2"></div>
        <div id="attn-ctabs" class="tbar mb-3"></div>
        <div id="attn-list" class="ascroll"></div>
@@ -238,11 +252,16 @@
       <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between mb-5">
        <div>
         <h2 class="text-lg font-bold text-slate-800">학생 명단 관리</h2>
-        <p class="text-sm text-slate-500 mt-0.5">학생 추가·수정·삭제 및 일괄 등록</p>
-        <div id="cls-filter-list" class="tbar mt-3"><button type="button" class="ctab on" data-cf="전체">전체</button></div>
-        <div class="mt-2 flex flex-wrap gap-2">
-         <button id="del-cls-btn" class="abtn dbtn" type="button">현재 반 삭제</button>
-         <button id="del-all-btn" class="abtn dbtn" type="button">전체 삭제</button>
+        <p class="text-sm text-slate-500 mt-0.5">학생 추가·수정·삭제, 반 이름 수정 및 일괄 등록</p>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+         <div id="cls-filter-list" class="tbar flex-wrap"></div>
+         <button id="sort-cls-btn" class="abtn text-xs" type="button" title="반 순서를 번호/가나다 순으로 자동 정렬">🔄 자동 정렬</button>
+         <span class="text-xs text-slate-400 hidden sm:inline">(💡 반 탭을 드래그하여 순서 조정)</span>
+        </div>
+        <div class="mt-2.5 flex flex-wrap gap-2">
+         <button id="rename-cls-btn" class="abtn text-xs font-bold text-teal-800 bg-teal-50 border-teal-200" type="button">✏️ 현재 반 이름 변경</button>
+         <button id="del-cls-btn" class="abtn dbtn text-xs" type="button">현재 반 삭제</button>
+         <button id="del-all-btn" class="abtn dbtn text-xs" type="button">전체 삭제</button>
         </div>
        </div>
        <div class="w-full xl:w-64">
@@ -266,11 +285,17 @@
        <section class="sp p-4 xl:col-span-3">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-3">
          <div><h3 class="font-bold text-slate-700 mb-0.5">일괄 등록</h3><p class="text-xs text-slate-500">엑셀(xlsx) 또는 텍스트 붙여넣기</p></div>
-         <div class="w-24 flex-shrink-0"><label class="block text-xs font-semibold mb-1" for="fb-cls">기본 반</label><input id="fb-cls" class="fc" type="text" value="1반" maxlength="20" autocomplete="off"></div>
+         <div class="w-32 flex-shrink-0"><label class="block text-xs font-semibold mb-1" for="fb-cls">기본 반</label><input id="fb-cls" class="fc" type="text" value="1반" maxlength="20" autocomplete="off"></div>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
          <div><label class="block text-xs font-semibold mb-1" for="bulk-file">파일 업로드</label><input id="bulk-file" class="fc p-2 text-sm" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt"><button id="rm-file-btn" class="abtn mt-1.5 text-xs" type="button">파일 제거</button></div>
-         <div><label class="block text-xs font-semibold mb-1" for="bulk-names">직접 입력</label><textarea id="bulk-names" class="fc" rows="3" placeholder="1 홍길동&#10;2 김철수"></textarea></div>
+         <div><label class="block text-xs font-semibold mb-1" for="bulk-names">직접 입력</label><textarea id="bulk-names" class="fc" rows="3" placeholder="1 홍길동&#10;2 김철수&#10;또는 1반 1 홍길동"></textarea></div>
+        </div>
+        <div class="mt-2">
+         <label class="inline-flex items-center gap-2 text-xs font-semibold text-teal-800 cursor-pointer bg-white px-2.5 py-1.5 rounded-md border border-teal-200">
+           <input type="checkbox" id="force-fb-cls" class="accent-teal-700 h-4 w-4">
+           <span>모든 학생을 지정된 <strong>기본 반</strong>으로 일괄 배정</span>
+         </label>
         </div>
         <div id="imp-prev" class="hidden mt-3 rounded-lg border border-teal-200 bg-teal-50 p-2.5">
          <p id="prev-txt" class="text-sm font-semibold text-teal-900"></p>
@@ -346,11 +371,11 @@
       <img src="./icon.png" alt="MINARI STUDIO 로고" style="width: 34px; height: 34px; object-fit: contain;">
       <div>
        <span class="f-wm">MINARI STUDIO</span>
-       <span class="f-tag">Classroom Tools for Teachers · 과학 형성평가 통과 관리 시스템</span>
+       <span class="f-tag">Classroom Tools for Teachers · 과학 형성평가 관리 시스템</span>
       </div>
      </div>
      <div class="f-legal">
-      © 2026 MINARI STUDIO. All rights reserved.<span class="sep">|</span>Science Evaluation Manager Web App v1.0<br>
+      © 2026 MINARI STUDIO. All rights reserved.<span class="sep">|</span>Science Evaluation Manager Web App v1.1<br>
       본 웹앱의 디자인·아이콘·소스 코드에 대한 권리는 MINARI STUDIO에 있으며, 무단 복제 및 재배포를 금합니다.
      </div>
     </div>
@@ -405,7 +430,7 @@
 
   <script>
   const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwddh7y3igBfqKeFoUpXtpJjeI_yh0kKqtSrltmM73WFJbRLhQkGX_8jI_WPqHqirww/exec';
-  const EKEY='sci_evals_v3', SKEY='sci_settings_v3', CKEY='sci_eval_ctr_v3', DKEY='sci_students_v3';
+  const EKEY='sci_evals_v3', SKEY='sci_settings_v3', CKEY='sci_eval_ctr_v3', DKEY='sci_students_v3', CLSKEY='sci_class_order_v3';
 
   // LOCAL STORAGE FALLBACK FOR DATASDK
   if (!window.dataSdk) {
@@ -515,6 +540,17 @@ function doGet(e) {
   function nxtId(){const id=Number(localStorage.getItem(CKEY)||1);localStorage.setItem(CKEY,id+1);return id;}
   function loadCfg(){try{const saved=JSON.parse(localStorage.getItem(SKEY));return{grade:'1',sheetsUrl:DEFAULT_SHEETS_URL,...saved};}catch{return{grade:'1',sheetsUrl:DEFAULT_SHEETS_URL};}}
   function saveCfg(s){localStorage.setItem(SKEY,JSON.stringify(s));}
+  function loadClassOrder(){try{const d=JSON.parse(localStorage.getItem(CLSKEY));if(Array.isArray(d))return d;}catch(e){}return[];}
+  function saveClassOrder(arr){try{localStorage.setItem(CLSKEY,JSON.stringify(arr));}catch(e){}}
+  function getOrderedClasses(){
+    const rawClasses=[...new Set(S.records.map(r=>r.class_name))];
+    S.classOrder=S.classOrder.filter(c=>rawClasses.includes(c));
+    const missing=rawClasses.filter(c=>!S.classOrder.includes(c));
+    missing.sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
+    S.classOrder=[...S.classOrder,...missing];
+    saveClassOrder(S.classOrder);
+    return S.classOrder;
+  }
 
   // EVAL FIELDS
   function ef(id){if(id===0)return{a1:'attempt_1',a2:'attempt_2',a3:'attempt_3',final:'final_check'};return{a1:`e${id}_1`,a2:`e${id}_2`,a3:`e${id}_3`,final:`e${id}_f`};}
@@ -592,7 +628,7 @@ function doGet(e) {
   }
   function renderAttnCtabs(){
     const c=document.getElementById('attn-ctabs');c.innerHTML='';
-    ['전체',...sortedCls()].forEach(cls=>{const b=document.createElement('button');b.type='button';b.className='ctab'+(cls===S.dashClassFilter?' on':'');b.style.fontSize='.72rem';b.style.minHeight='26px';b.style.padding='2px 9px';b.textContent=cls;b.addEventListener('click',()=>{S.dashClassFilter=cls;renderAttnCtabs();renderAttnList();});c.appendChild(b);});
+    ['전체',...getOrderedClasses()].forEach(cls=>{const b=document.createElement('button');b.type='button';b.className='ctab'+(cls===S.dashClassFilter?' on':'');b.style.fontSize='.72rem';b.style.minHeight='26px';b.style.padding='2px 9px';b.textContent=cls;b.addEventListener('click',()=>{S.dashClassFilter=cls;renderAttnCtabs();renderAttnList();});c.appendChild(b);});
   }
   function renderAttnList(){
     const id=S.dashEvalId??S.evaluations[0]?.id??null;
@@ -600,7 +636,13 @@ function doGet(e) {
     list.innerHTML='';
     if(id===null){empty.classList.remove('hv');return;}
     const f=ef(id);
-    const students=S.records.filter(s=>{const t=stEval(s,id).type;if(t!=='progress'&&t!=='fail')return false;if(S.dashClassFilter!=='전체'&&s.class_name!==S.dashClassFilter)return false;return true;}).sort((a,b)=>a.class_name.localeCompare(b.class_name,'ko',{numeric:true})||(a.student_number||999)-(b.student_number||999));
+    // 통과(pass) 학생만 제외하고 미체크(pending), 진행중(progress), 3차미통과(fail) 모두 표시
+    const students=S.records.filter(s=>{
+      const t=stEval(s,id).type;
+      if(t==='pass')return false;
+      if(S.dashClassFilter!=='전체'&&s.class_name!==S.dashClassFilter)return false;
+      return true;
+    }).sort((a,b)=>a.class_name.localeCompare(b.class_name,'ko',{numeric:true})||(a.student_number||999)-(b.student_number||999));
     empty.classList.toggle('hv',students.length>0);
     students.forEach(student=>{
       const st=stEval(student,id);
@@ -617,7 +659,7 @@ function doGet(e) {
   function renderClsOverview(){
     const id=S.dashEvalId??S.evaluations[0]?.id??null;
     const c=document.getElementById('cls-overview');c.innerHTML='';
-    sortedCls().forEach(cn=>{
+    getOrderedClasses().forEach(cn=>{
       const students=S.records.filter(r=>r.class_name===cn);
       const passed=id!==null?students.filter(s=>stEval(s,id).type==='pass').length:0;
       const f2=id!==null?ef(id):null;
@@ -639,7 +681,7 @@ function doGet(e) {
   }
   function renderEvalCtabs(){
     const c=document.getElementById('eval-ctabs');c.innerHTML='';
-    ['전체',...sortedCls()].forEach(cls=>{const b=document.createElement('button');b.type='button';b.className='ctab'+(cls===S.evalClassFilter?' on':'');b.textContent=cls;b.addEventListener('click',()=>{S.evalClassFilter=cls;renderEvalCtabs();renderEvalStudents();});c.appendChild(b);});
+    ['전체',...getOrderedClasses()].forEach(cls=>{const b=document.createElement('button');b.type='button';b.className='ctab'+(cls===S.evalClassFilter?' on':'');b.textContent=cls;b.addEventListener('click',()=>{S.evalClassFilter=cls;renderEvalCtabs();renderEvalStudents();});c.appendChild(b);});
   }
   function renderEvalActions(){
     const bar=document.getElementById('eval-actions');
@@ -731,15 +773,58 @@ function doGet(e) {
     ex.forEach(n=>n.remove());
   }
   function renderClsFilters(){
-    const classes=[...new Set(S.records.map(r=>r.class_name))];
-    S.classOrder=S.classOrder.filter(c=>classes.includes(c));
-    classes.sort((a,b)=>(S.classOrder.indexOf(a)-S.classOrder.indexOf(b))||a.localeCompare(b,'ko',{numeric:true}));
-    S.classOrder=[...new Set([...S.classOrder,...classes])];
-    const wanted=['전체',...S.classOrder];
+    const wanted=['전체',...getOrderedClasses()];
     const c=document.getElementById('cls-filter-list');
-    const ex=new Map([...c.children].map(b=>[b.dataset.cf,b]));
-    wanted.forEach(cn=>{let b=ex.get(cn);if(!b){b=document.createElement('button');b.type='button';b.className='ctab';b.dataset.cf=cn;b.addEventListener('click',()=>{S.selectedClass=cn;renderClsFilters();renderRoster();});c.appendChild(b);}b.textContent=cn;b.classList.toggle('on',cn===S.selectedClass);ex.delete(cn);});
-    ex.forEach(b=>b.remove());
+    c.innerHTML='';
+    wanted.forEach(cn=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='ctab'+(cn===S.selectedClass?' on':'');
+      b.textContent=cn;
+      b.dataset.cf=cn;
+      if(cn!=='전체'){
+        b.draggable=true;
+        b.title='드래그하여 반 순서 조정';
+        b.addEventListener('dragstart',e=>{
+          e.dataTransfer.setData('text/plain',cn);
+          e.dataTransfer.effectAllowed='move';
+          b.classList.add('opacity-50');
+        });
+        b.addEventListener('dragend',()=>{
+          b.classList.remove('opacity-50');
+          document.querySelectorAll('.ctab').forEach(el=>el.classList.remove('drag-over'));
+        });
+        b.addEventListener('dragover',e=>{
+          e.preventDefault();
+          e.dataTransfer.dropEffect='move';
+          b.classList.add('drag-over');
+        });
+        b.addEventListener('dragleave',()=>{
+          b.classList.remove('drag-over');
+        });
+        b.addEventListener('drop',e=>{
+          e.preventDefault();
+          b.classList.remove('drag-over');
+          const srcClass=e.dataTransfer.getData('text/plain');
+          if(!srcClass||srcClass===cn)return;
+          const srcIdx=S.classOrder.indexOf(srcClass);
+          const dstIdx=S.classOrder.indexOf(cn);
+          if(srcIdx!==-1&&dstIdx!==-1){
+            S.classOrder.splice(srcIdx,1);
+            S.classOrder.splice(dstIdx,0,srcClass);
+            saveClassOrder(S.classOrder);
+            refreshAll();
+            toast(`반 순서가 변경되었습니다.`,'ok');
+          }
+        });
+      }
+      b.addEventListener('click',()=>{
+        S.selectedClass=cn;
+        renderClsFilters();
+        renderRoster();
+      });
+      c.appendChild(b);
+    });
   }
   function renderRoster(){
     const vis=filteredRoster();
@@ -789,9 +874,41 @@ function doGet(e) {
   }
 
   // IMPORT
-  function parseText(text,fb){return text.split(/\r?\n/).flatMap(line=>{const cols=line.split(/[\t,]/).map(v=>v.trim()).filter(Boolean);if(!cols.length)return[];if(cols.length>=3&&/반$/.test(cols[0])&&/^\d+$/.test(cols[1]))return[{class_name:nc(cols[0]),student_number:Number(cols[1]),student_name:cols[2]}];if(cols.length>=2&&/^\d+$/.test(cols[0]))return[{class_name:fb,student_number:Number(cols[0]),student_name:cols[1]}];if(cols.length>=2&&/반$/.test(cols[0]))return[{class_name:nc(cols[0]),student_name:cols[1]}];return[{class_name:fb,student_name:cols[0]}];});}
+  function parseText(text,fb,forceFb=false){
+    return text.split(/\r?\n/).flatMap(line=>{
+      const cols=line.split(/[\t,]/).map(v=>v.trim()).filter(Boolean);
+      if(!cols.length)return[];
+      if(forceFb){
+        if(cols.length>=2&&/^\d+$/.test(cols[0]))return[{class_name:fb,student_number:Number(cols[0]),student_name:cols[1]}];
+        if(cols.length>=3&&/^\d+$/.test(cols[1]))return[{class_name:fb,student_number:Number(cols[1]),student_name:cols[2]}];
+        return[{class_name:fb,student_name:cols[cols.length-1]}];
+      }
+      if(cols.length>=3&&/반$/.test(cols[0])&&/^\d+$/.test(cols[1]))return[{class_name:nc(cols[0]),student_number:Number(cols[1]),student_name:cols[2]}];
+      if(cols.length>=2&&/^\d+$/.test(cols[0]))return[{class_name:fb,student_number:Number(cols[0]),student_name:cols[1]}];
+      if(cols.length>=2&&/반$/.test(cols[0]))return[{class_name:nc(cols[0]),student_name:cols[1]}];
+      return[{class_name:fb,student_name:cols[0]}];
+    });
+  }
   function findV(row,names){const k=Object.keys(row).find(k=>names.some(n=>k.replace(/\s/g,'').toLowerCase()===n));return k?row[k]:'';}
-  function parseWb(data,fb){const wb=XLSX.read(data,{type:'array'});const rows=[];wb.SheetNames.forEach(sn=>{const sheet=wb.Sheets[sn];const sRows=XLSX.utils.sheet_to_json(sheet,{defval:''});const sc=nc(sn);sRows.forEach(row=>{const name=String(findV(row,['이름','학생명','학생이름','성명','name'])||Object.values(row)[0]||'').trim();const ec=nc(findV(row,['반','학급','class']));const nv=Number(findV(row,['번호','학생번호','number','no']));if(name&&!/이름|학생명|성명/i.test(name))rows.push({class_name:ec||sc||fb,student_number:Number.isInteger(nv)&&nv>0?nv:undefined,student_name:name});});});return rows;}
+  function parseWb(data,fb,forceFb=false){
+    const wb=XLSX.read(data,{type:'array'});
+    const rows=[];
+    wb.SheetNames.forEach(sn=>{
+      const sheet=wb.Sheets[sn];
+      const sRows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+      const sc=nc(sn);
+      sRows.forEach(row=>{
+        const name=String(findV(row,['이름','학생명','학생이름','성명','name'])||Object.values(row)[0]||'').trim();
+        const ec=nc(findV(row,['반','학급','class']));
+        const nv=Number(findV(row,['번호','학생번호','number','no']));
+        if(name&&!/이름|학생명|성명/i.test(name)){
+          const targetClass=forceFb?fb:(ec||sc||fb);
+          rows.push({class_name:targetClass,student_number:Number.isInteger(nv)&&nv>0?nv:undefined,student_name:name});
+        }
+      });
+    });
+    return rows;
+  }
   function setImportRows(rows){const dd=[];const seen=new Set();const nn={};rows.forEach(row=>{const cn=nc(row.class_name),sn=String(row.student_name||'').trim(),key=cn+'|'+sn;if(cn&&sn&&!seen.has(key)){seen.add(key);const pn=Number(row.student_number);const num=Number.isInteger(pn)&&pn>0?pn:((nn[cn]||0)+1);nn[cn]=Math.max(nn[cn]||0,num);dd.push({class_name:cn,student_number:num,student_name:sn});}});S.importRows=dd;const groups=[...new Set(dd.map(r=>r.class_name))];document.getElementById('imp-prev').classList.toggle('hidden',!dd.length);document.getElementById('prev-txt').textContent=dd.length?`${dd.length}명 등록 준비 완료`:'';document.getElementById('prev-det').textContent=dd.length?`감지된 반: ${groups.join(', ')}`:''; }
   function armDel(btn,def){if(!btn.classList.contains('cf')){btn.classList.add('cf');btn.textContent='삭제 확인';setTimeout(()=>{if(btn.isConnected&&btn.classList.contains('cf')){btn.classList.remove('cf');btn.textContent=def;}},3500);return false;}return true;}
   async function deleteRecs(recs,btn,def){if(!recs.length){document.getElementById('form-msg').textContent='삭제할 학생이 없습니다.';btn.classList.remove('cf');return;}btn.disabled=true;let del=0;for(const r of recs){const res=await window.dataSdk.delete(r);if(!res.isOk)break;del++;}btn.disabled=false;btn.classList.remove('cf');btn.textContent=def;document.getElementById('form-msg').textContent=del+'명 삭제 완료.';}
@@ -808,13 +925,133 @@ function doGet(e) {
     document.getElementById('save-cfg-btn').addEventListener('click',()=>{S.settings.grade=document.getElementById('grade-in').value.trim();S.settings.sheetsUrl=document.getElementById('sheets-url').value.trim();saveCfg(S.settings);document.getElementById('cfg-msg').textContent='설정 저장 완료.';toast('설정 저장 완료','ok');});
     document.getElementById('sync-all-btn').addEventListener('click',()=>syncAll());
     document.getElementById('copy-code-btn').addEventListener('click',()=>{navigator.clipboard.writeText(SCRIPT_TPL).then(()=>toast('코드 복사 완료','ok'));});
+    
+    // 자동 정렬
+    document.getElementById('sort-cls-btn').addEventListener('click',()=>{
+      const rawClasses=[...new Set(S.records.map(r=>r.class_name))];
+      rawClasses.sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
+      S.classOrder=rawClasses;
+      saveClassOrder(S.classOrder);
+      refreshAll();
+      toast('반 순서가 번호/가나다 순으로 자동 정렬되었습니다.','ok');
+    });
+
+    // 반 이름 변경
+    document.getElementById('rename-cls-btn').addEventListener('click',async()=>{
+      if(S.selectedClass==='전체'){
+        toast('이름을 변경할 특정 반을 먼저 선택해 주세요.','err');
+        return;
+      }
+      const oldName=S.selectedClass;
+      const newName=prompt(`선택된 '${oldName}'의 새로운 이름을 입력하세요:`,oldName);
+      if(!newName||!newName.trim()||newName.trim()===oldName)return;
+      const formattedNewName=nc(newName);
+      const targetStudents=S.records.filter(r=>r.class_name===oldName);
+      if(!targetStudents.length){
+        toast('해당 반에 등록된 학생이 없습니다.','err');
+        return;
+      }
+      
+      let updatedCount=0;
+      for(const student of targetStudents){
+        const res=await window.dataSdk.update({...student,class_name:formattedNewName});
+        if(res.isOk){
+          const cur=byId(student.__backendId);
+          if(cur)cur.class_name=formattedNewName;
+          updatedCount++;
+        }
+      }
+      S.classOrder=S.classOrder.map(c=>c===oldName?formattedNewName:c);
+      S.selectedClass=formattedNewName;
+      saveClassOrder(S.classOrder);
+      refreshAll();
+      toast(`'${oldName}' 학생 ${updatedCount}명의 반 이름이 '${formattedNewName}'(으)로 변경되었습니다.`,'ok');
+    });
+
     document.getElementById('del-cls-btn').addEventListener('click',()=>{const btn=document.getElementById('del-cls-btn');if(!armDel(btn,'현재 반 삭제'))return;const recs=S.selectedClass==='전체'?[]:S.records.filter(r=>r.class_name===S.selectedClass);deleteRecs(recs,btn,'현재 반 삭제');});
     document.getElementById('del-all-btn').addEventListener('click',()=>{const btn=document.getElementById('del-all-btn');if(!armDel(btn,'전체 삭제'))return;deleteRecs([...S.records],btn,'전체 삭제');});
     document.getElementById('rm-file-btn').addEventListener('click',()=>{document.getElementById('bulk-file').value='';document.getElementById('bulk-names').value='';S.importRows=[];document.getElementById('imp-prev').classList.add('hidden');document.getElementById('bulk-msg').textContent='파일 제거됨.';});
-    document.getElementById('bulk-file').addEventListener('change',async()=>{const file=document.getElementById('bulk-file').files[0];if(!file)return;const fb=nc(document.getElementById('fb-cls').value)||'1반';try{let rows=[];if(/\.(xlsx|xls)$/i.test(file.name))rows=parseWb(await file.arrayBuffer(),fb);else{const t=await file.text();document.getElementById('bulk-names').value=t;rows=parseText(t,fb);}setImportRows(rows);document.getElementById('bulk-msg').textContent=rows.length?'파일 분석 완료.':'학생 이름을 찾지 못했습니다.';}catch{document.getElementById('bulk-msg').textContent='파일 읽기 실패.';}});
-    document.getElementById('bulk-names').addEventListener('input',()=>{if(!document.getElementById('bulk-file').files.length){const fb=nc(document.getElementById('fb-cls').value)||'1반';setImportRows(parseText(document.getElementById('bulk-names').value,fb));}});
-    document.getElementById('bulk-add-btn').addEventListener('click',async()=>{const fb=nc(document.getElementById('fb-cls').value)||'1반';const rows=S.importRows.length?S.importRows:parseText(document.getElementById('bulk-names').value,fb);const bm=document.getElementById('bulk-msg');if(!rows.length){bm.textContent='파일이나 텍스트를 입력하세요.';return;}if(S.records.length+rows.length>999){bm.textContent='최대 999명까지 가능합니다.';return;}const btn=document.getElementById('bulk-add-btn');btn.disabled=true;bm.textContent=rows.length+'명 저장 중...';let saved=0;for(const row of rows){const res=await window.dataSdk.create({class_name:row.class_name,student_name:row.student_name,student_number:row.student_number,attempt_1:'',attempt_2:'',attempt_3:'',final_check:false,created_at:new Date().toISOString()});if(!res.isOk)break;saved++;}btn.disabled=false;if(saved===rows.length){document.getElementById('bulk-file').value='';document.getElementById('bulk-names').value='';S.importRows=[];document.getElementById('imp-prev').classList.add('hidden');bm.textContent=saved+'명 등록 완료.';toast(saved+'명 학생 등록됨','ok');}else{bm.textContent=saved+'명 후 저장 실패.';}});
-    document.getElementById('stu-form').addEventListener('submit',async e=>{e.preventDefault();const cn=nc(document.getElementById('new-cls').value);const sn=Number(document.getElementById('new-num').value);const snm=document.getElementById('new-name').value.trim();const msg=document.getElementById('form-msg');if(!cn||!Number.isInteger(sn)||sn<1||!snm){msg.textContent='반, 번호, 이름을 모두 입력하세요.';return;}if(S.records.length>=999){msg.textContent='최대 999명까지 가능합니다.';return;}const btn=document.getElementById('add-stu-btn');btn.disabled=true;const res=await window.dataSdk.create({class_name:cn,student_name:snm,student_number:sn,attempt_1:'',attempt_2:'',attempt_3:'',final_check:false,created_at:new Date().toISOString()});btn.disabled=false;if(res.isOk){document.getElementById('new-name').value='';msg.textContent=snm+' 등록 완료.';}else{msg.textContent='등록 실패.';}});
+    
+    const parseImportInputs=async()=>{
+      const file=document.getElementById('bulk-file').files[0];
+      const fb=nc(document.getElementById('fb-cls').value)||'1반';
+      const forceFb=document.getElementById('force-fb-cls').checked;
+      try{
+        let rows=[];
+        if(file){
+          if(/\.(xlsx|xls)$/i.test(file.name))rows=parseWb(await file.arrayBuffer(),fb,forceFb);
+          else{
+            const t=await file.text();
+            document.getElementById('bulk-names').value=t;
+            rows=parseText(t,fb,forceFb);
+          }
+        }else{
+          const t=document.getElementById('bulk-names').value;
+          if(t)rows=parseText(t,fb,forceFb);
+        }
+        setImportRows(rows);
+        if(rows.length)document.getElementById('bulk-msg').textContent='명단 분석 완료 ('+rows.length+'명).';
+      }catch{
+        document.getElementById('bulk-msg').textContent='파일 읽기 실패.';
+      }
+    };
+
+    document.getElementById('bulk-file').addEventListener('change',parseImportInputs);
+    document.getElementById('force-fb-cls').addEventListener('change',parseImportInputs);
+    document.getElementById('fb-cls').addEventListener('input',()=>{if(document.getElementById('force-fb-cls').checked)parseImportInputs();});
+    document.getElementById('bulk-names').addEventListener('input',()=>{
+      if(!document.getElementById('bulk-file').files.length){
+        const fb=nc(document.getElementById('fb-cls').value)||'1반';
+        const forceFb=document.getElementById('force-fb-cls').checked;
+        setImportRows(parseText(document.getElementById('bulk-names').value,fb,forceFb));
+      }
+    });
+
+    document.getElementById('bulk-add-btn').addEventListener('click',async()=>{
+      const fb=nc(document.getElementById('fb-cls').value)||'1반';
+      const forceFb=document.getElementById('force-fb-cls').checked;
+      const rows=S.importRows.length?S.importRows:parseText(document.getElementById('bulk-names').value,fb,forceFb);
+      const bm=document.getElementById('bulk-msg');
+      if(!rows.length){bm.textContent='파일이나 텍스트를 입력하세요.';return;}
+      if(S.records.length+rows.length>999){bm.textContent='최대 999명까지 가능합니다.';return;}
+      const btn=document.getElementById('bulk-add-btn');btn.disabled=true;bm.textContent=rows.length+'명 저장 중...';
+      let saved=0;
+      for(const row of rows){
+        const res=await window.dataSdk.create({class_name:row.class_name,student_name:row.student_name,student_number:row.student_number,attempt_1:'',attempt_2:'',attempt_3:'',final_check:false,created_at:new Date().toISOString()});
+        if(!res.isOk)break;
+        saved++;
+      }
+      btn.disabled=false;
+      if(saved===rows.length){
+        document.getElementById('bulk-file').value='';
+        document.getElementById('bulk-names').value='';
+        S.importRows=[];
+        document.getElementById('imp-prev').classList.add('hidden');
+        bm.textContent=saved+'명 등록 완료.';
+        toast(saved+'명 학생 등록됨','ok');
+      }else{
+        bm.textContent=saved+'명 후 저장 실패.';
+      }
+    });
+
+    document.getElementById('stu-form').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const cn=nc(document.getElementById('new-cls').value);
+      const sn=Number(document.getElementById('new-num').value);
+      const snm=document.getElementById('new-name').value.trim();
+      const msg=document.getElementById('form-msg');
+      if(!cn||!Number.isInteger(sn)||sn<1||!snm){msg.textContent='반, 번호, 이름을 모두 입력하세요.';return;}
+      if(S.records.length>=999){msg.textContent='최대 999명까지 가능합니다.';return;}
+      const btn=document.getElementById('add-stu-btn');btn.disabled=true;
+      const res=await window.dataSdk.create({class_name:cn,student_name:snm,student_number:sn,attempt_1:'',attempt_2:'',attempt_3:'',final_check:false,created_at:new Date().toISOString()});
+      btn.disabled=false;
+      if(res.isOk){
+        document.getElementById('new-name').value='';
+        msg.textContent=snm+' 등록 완료.';
+      }else{
+        msg.textContent='등록 실패.';
+      }
+    });
     document.getElementById('stu-search').addEventListener('input',e=>{S.searchTerm=e.target.value.trim();renderRoster();});
   }
 
@@ -825,6 +1062,7 @@ function doGet(e) {
     document.getElementById('grade-in').value=S.settings.grade||'';
     document.getElementById('sheets-url').value=S.settings.sheetsUrl||'';
     S.evaluations=loadEvals();
+    S.classOrder=loadClassOrder();
     S.selectedEvalId=S.evaluations[0]?.id??null;
     S.dashEvalId=S.evaluations[0]?.id??null;
     renderChartEtabs();renderAttnEtabs();renderAttnCtabs();
