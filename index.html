@@ -307,7 +307,28 @@
     .ov-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-      border-color: #99f6e4;
+    }
+
+    .ov-card.done {
+      border: 2px solid #10b981;
+      background: #f0fdf4;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+    }
+
+    .ov-card.done:hover {
+      border-color: #059669;
+      background: #ecfdf5;
+    }
+
+    .ov-card.undone {
+      border: 2px solid #fca5a5;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.05);
+    }
+
+    .ov-card.undone:hover {
+      border-color: #ef4444;
+      background: #fef2f2;
     }
 
     .ascroll {
@@ -433,6 +454,12 @@
     .badge.pass {
       color: #15803d;
       background: #dcfce7;
+    }
+
+    .badge.final-pass {
+      color: #854d0e;
+      background: #fef08a;
+      border: 1px solid #fde047;
     }
 
     .badge.progress {
@@ -861,10 +888,16 @@
         </div>
         <!-- Class overview -->
         <section class="surface bg-white p-5 mt-4">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-bold text-slate-800">반별 현황</h2>
-            <button id="go-mng-btn" class="abtn" type="button">학생 명단 관리</button>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="font-bold text-slate-800">반별 현황</h2>
+                <span class="text-xs text-slate-400 font-normal">※ 3차 미통과자의 과제 제출까지 완료되어야 초록색(완료)으로 전환됩니다.</span>
+              </div>
+            </div>
+            <button id="go-mng-btn" class="abtn self-start sm:self-auto" type="button">👥 학생 명단 관리</button>
           </div>
+          <div id="cls-overview-etabs" class="tbar mb-3"></div>
           <div id="cls-overview" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"></div>
         </section>
       </section>
@@ -1391,7 +1424,24 @@ function doGet(e) {
     // UTILS
     function nc(v) { const t = String(v || '').trim(); if (!t) return ''; if (/^\d+$/.test(t)) return t + '반'; return t.replace(/\s+/g, ''); }
     function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    function stEval(st, id) { const f = ef(id); const a1 = st[f.a1] || '', a2 = st[f.a2] || '', a3 = st[f.a3] || ''; if (a1 === '통과' || a2 === '통과' || a3 === '통과') return { label: '통과', type: 'pass' }; if (a3 === '미통과') return { label: '3차 미통과', type: 'fail' }; if (a1 || a2 || a3) return { label: '진행 중', type: 'progress' }; return { label: '미응시', type: 'pending' }; }
+    function stEval(st, id) {
+      const f = ef(id);
+      const a1 = st[f.a1] || '', a2 = st[f.a2] || '', a3 = st[f.a3] || '';
+      const isFinal = Boolean(st[f.final]);
+      if (a1 === '통과' || a2 === '통과' || a3 === '통과') {
+        return { label: '통과', type: 'pass', isCompleted: true };
+      }
+      if (a3 === '미통과') {
+        if (isFinal) {
+          return { label: '통과(과제제출)', type: 'final-pass', isCompleted: true };
+        }
+        return { label: '3차 미통과', type: 'fail', isCompleted: false };
+      }
+      if (a1 || a2) {
+        return { label: '진행 중', type: 'progress', isCompleted: false };
+      }
+      return { label: '미응시', type: 'pending', isCompleted: false };
+    }
     function sortedCls() { return [...new Set(S.records.map(r => r.class_name))].sort((a, b) => a.localeCompare(b, 'ko', { numeric: true })); }
     function byId(id) { return S.records.find(r => r.__backendId === id); }
     function updSel(sel) { sel.classList.remove('pp', 'pf'); if (sel.value === '통과') sel.classList.add('pp'); if (sel.value === '미통과') sel.classList.add('pf'); }
@@ -1571,8 +1621,10 @@ function doGet(e) {
       const g = { pass: 0, progress: 0, fail: 0 };
       const targetId = ev ? ev.id : 0;
       S.records.forEach(s => {
-        const t = stEval(s, targetId).type;
-        if (g[t] !== undefined) g[t]++;
+        const st = stEval(s, targetId);
+        if (st.isCompleted) g.pass++;
+        else if (st.type === 'progress') g.progress++;
+        else if (st.type === 'fail') g.fail++;
       });
       document.getElementById('sc-pass').textContent = g.pass;
       document.getElementById('sc-prog').textContent = g.progress;
@@ -1582,12 +1634,19 @@ function doGet(e) {
     // DASHBOARD CHART
     function renderChartEtabs() {
       const c = document.getElementById('chart-etabs'); c.innerHTML = '';
-      S.evaluations.forEach(ev => { const b = document.createElement('button'); b.type = 'button'; b.className = 'etab' + (ev.id === S.dashEvalId ? ' on' : ''); b.textContent = ev.name; b.addEventListener('click', () => { S.dashEvalId = ev.id; renderChartEtabs(); renderChart(); renderAttnEtabs(); renderAttnList(); }); c.appendChild(b); });
+      S.evaluations.forEach(ev => { const b = document.createElement('button'); b.type = 'button'; b.className = 'etab' + (ev.id === S.dashEvalId ? ' on' : ''); b.textContent = ev.name; b.addEventListener('click', () => { S.dashEvalId = ev.id; renderChartEtabs(); renderChart(); renderAttnEtabs(); renderAttnList(); renderClsOverviewEtabs(); renderClsOverview(); updSummary(); }); c.appendChild(b); });
     }
     function renderChart() {
       const id = S.dashEvalId ?? S.evaluations[0]?.id ?? null;
-      const total = S.records.length; const g = { pass: 0, progress: 0, fail: 0, pending: 0 };
-      if (id !== null) S.records.forEach(s => g[stEval(s, id).type]++);
+      const total = S.records.length;
+      const g = { pass: 0, progress: 0, fail: 0, pending: 0 };
+      if (id !== null) {
+        S.records.forEach(s => {
+          const st = stEval(s, id);
+          if (st.isCompleted) g.pass++;
+          else if (g[st.type] !== undefined) g[st.type]++;
+        });
+      }
       const pct = v => total ? Math.round(v / total * 100) : 0;
       [['pass', 'ct-pass', 'ct-pass-t'], ['progress', 'ct-prog', 'ct-prog-t'], ['fail', 'ct-fail', 'ct-fail-t'], ['pending', 'ct-pend', 'ct-pend-t']].forEach(([k, bid, tid]) => {
         const b = document.getElementById(bid), t = document.getElementById(tid);
@@ -1599,7 +1658,7 @@ function doGet(e) {
     // ATTENTION PANEL
     function renderAttnEtabs() {
       const c = document.getElementById('attn-etabs'); c.innerHTML = '';
-      S.evaluations.forEach(ev => { const b = document.createElement('button'); b.type = 'button'; b.className = 'etab' + (ev.id === S.dashEvalId ? ' on' : ''); b.style.fontSize = '.72rem'; b.style.minHeight = '26px'; b.style.padding = '2px 9px'; b.textContent = ev.name; b.addEventListener('click', () => { S.dashEvalId = ev.id; renderAttnEtabs(); renderChartEtabs(); renderChart(); renderAttnList(); }); c.appendChild(b); });
+      S.evaluations.forEach(ev => { const b = document.createElement('button'); b.type = 'button'; b.className = 'etab' + (ev.id === S.dashEvalId ? ' on' : ''); b.style.fontSize = '.72rem'; b.style.minHeight = '26px'; b.style.padding = '2px 9px'; b.textContent = ev.name; b.addEventListener('click', () => { S.dashEvalId = ev.id; renderAttnEtabs(); renderChartEtabs(); renderChart(); renderAttnList(); renderClsOverviewEtabs(); renderClsOverview(); updSummary(); }); c.appendChild(b); });
     }
     function renderAttnCtabs() {
       const c = document.getElementById('attn-ctabs'); c.innerHTML = '';
@@ -1611,10 +1670,10 @@ function doGet(e) {
       list.innerHTML = '';
       if (id === null) { empty.classList.remove('hv'); return; }
       const f = ef(id);
-      // 통과(pass) 학생만 제외하고 미체크(pending), 진행중(progress), 3차미통과(fail) 모두 표시
+      // 통과(isCompleted: 초록 통과 + 3차미통과 과제제출 통과) 학생 제외하고 미체크, 진행중, 3차미통과(과제미제출) 표시
       const students = S.records.filter(s => {
-        const t = stEval(s, id).type;
-        if (t === 'pass') return false;
+        const t = stEval(s, id);
+        if (t.isCompleted) return false;
         if (S.dashClassFilter !== '전체' && s.class_name !== S.dashClassFilter) return false;
         return true;
       }).sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999));
@@ -1625,28 +1684,130 @@ function doGet(e) {
         const mkQ = (fk, lbl, cur) => { const cls = cur === '통과' ? 'pp' : cur === '미통과' ? 'pf' : ''; return `<select class="qsel ${cls}" data-field="${fk}" aria-label="${lbl}"><option value="">미체크</option><option value="통과"${cur === '통과' ? ' selected' : ''}>통과</option><option value="미통과"${cur === '미통과' ? ' selected' : ''}>미통과</option></select>`; };
         item.innerHTML = `<div class="flex items-center justify-between gap-2 mb-1.5"><div class="min-w-0"><p class="font-bold text-slate-800 text-sm truncate">${esc(student.student_name)}</p><p class="text-xs text-slate-500">${esc(student.class_name)} · ${student.student_number || '-'}번</p></div><span class="badge ${st.type} flex-shrink-0">${st.label}</span></div><div class="flex flex-wrap gap-1.5 items-end"><label class="flex flex-col gap-0.5 text-xs text-slate-500">1차${mkQ(f.a1, '1차', student[f.a1] || '')}</label><label class="flex flex-col gap-0.5 text-xs text-slate-500">2차${mkQ(f.a2, '2차', student[f.a2] || '')}</label><label class="flex flex-col gap-0.5 text-xs text-slate-500">3차${mkQ(f.a3, '3차', student[f.a3] || '')}</label><label class="flex flex-col gap-0.5 text-xs text-slate-500 items-center">제출<input type="checkbox" class="acb h-4 w-4 mt-1 accent-teal-700"${Boolean(student[f.final]) ? ' checked' : ''}></label></div>`;
         item.querySelectorAll('.qsel').forEach(sel => {
-          sel.addEventListener('change', async () => { updSelQ(sel); const ok = await updField(student.__backendId, sel.dataset.field, sel.value, id); if (ok) { const cur = byId(student.__backendId); if (cur) { const ns = stEval(cur, id); const badge = item.querySelector('.badge'); if (badge) { badge.className = 'badge ' + ns.type + ' flex-shrink-0'; badge.textContent = ns.label; } if (ns.type === 'pass') { item.style.transition = 'opacity .3s'; item.style.opacity = '0'; setTimeout(() => renderAttnList(), 310); } } } });
+          sel.addEventListener('change', async () => {
+            updSelQ(sel);
+            const ok = await updField(student.__backendId, sel.dataset.field, sel.value, id);
+            if (ok) {
+              const cur = byId(student.__backendId);
+              if (cur) {
+                const ns = stEval(cur, id);
+                const badge = item.querySelector('.badge');
+                if (badge) {
+                  badge.className = 'badge ' + ns.type + ' flex-shrink-0';
+                  badge.textContent = ns.label;
+                }
+                if (ns.isCompleted) {
+                  item.style.transition = 'opacity .3s';
+                  item.style.opacity = '0';
+                  setTimeout(() => renderAttnList(), 310);
+                }
+              }
+            }
+          });
         });
-        item.querySelector('.acb').addEventListener('change', async e => { await updField(student.__backendId, f.final, e.target.checked, id); });
+        item.querySelector('.acb').addEventListener('change', async e => {
+          const ok = await updField(student.__backendId, f.final, e.target.checked, id);
+          if (ok) {
+            const cur = byId(student.__backendId);
+            if (cur) {
+              const ns = stEval(cur, id);
+              const badge = item.querySelector('.badge');
+              if (badge) {
+                badge.className = 'badge ' + ns.type + ' flex-shrink-0';
+                badge.textContent = ns.label;
+              }
+              if (ns.isCompleted) {
+                item.style.transition = 'opacity .3s';
+                item.style.opacity = '0';
+                setTimeout(() => renderAttnList(), 310);
+              }
+            }
+          }
+        });
         list.appendChild(item);
       });
     }
+
+    // CLASS OVERVIEW (GREEN for COMPLETE, RED for INCOMPLETE)
+    function renderClsOverviewEtabs() {
+      const c = document.getElementById('cls-overview-etabs');
+      if (!c) return;
+      c.innerHTML = '';
+      S.evaluations.forEach(ev => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'etab' + (ev.id === S.dashEvalId ? ' on' : '');
+        b.style.fontSize = '.78rem';
+        b.style.minHeight = '28px';
+        b.style.padding = '3px 11px';
+        b.textContent = ev.name;
+        b.addEventListener('click', () => {
+          S.dashEvalId = ev.id;
+          renderChartEtabs();
+          renderChart();
+          renderAttnEtabs();
+          renderAttnList();
+          renderClsOverviewEtabs();
+          renderClsOverview();
+          updSummary();
+        });
+        c.appendChild(b);
+      });
+    }
+
     function renderClsOverview() {
       const id = S.dashEvalId ?? S.evaluations[0]?.id ?? null;
-      const c = document.getElementById('cls-overview'); c.innerHTML = '';
+      const c = document.getElementById('cls-overview');
+      c.innerHTML = '';
       getOrderedClasses().forEach(cn => {
         const students = S.records.filter(r => r.class_name === cn);
-        const passed = id !== null ? students.filter(s => stEval(s, id).type === 'pass').length : 0;
-        const f2 = id !== null ? ef(id) : null;
-        const tf = f2 ? students.filter(s => s[f2.a3] === '미통과').length : 0;
-        const rate = students.length ? Math.round(passed / students.length * 100) : 0;
-        const card = document.createElement('button'); card.type = 'button'; card.className = 'ov-card';
-        card.innerHTML = `<div class="flex items-center justify-between mb-2"><strong class="font-bold text-slate-800 text-sm">${esc(cn)}</strong><span class="text-sm font-bold text-teal-700">${rate}%</span></div><p class="text-xs text-slate-500">3차미통과 ${tf}명 · 통과 ${passed}명 / 전체 ${students.length}명</p><div class="cbar mt-2"><div class="cfill bg-teal-700" style="width:${rate}%"></div></div>`;
-        card.addEventListener('click', () => { S.evalClassFilter = cn; S.selectedEvalId = S.evaluations[0]?.id ?? null; showView('evaluation'); renderEvalView(); });
+        const total = students.length;
+        if (total === 0) return;
+
+        // 완료 판정: 시험 통과 또는 3차미통과+과제제출 완료
+        const completedStudents = id !== null ? students.filter(s => stEval(s, id).isCompleted) : [];
+        const completedCount = completedStudents.length;
+        const uncompletedCount = total - completedCount;
+        const rate = total ? Math.round(completedCount / total * 100) : 0;
+        const isClassComplete = total > 0 && completedCount === total;
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `ov-card ${isClassComplete ? 'done' : 'undone'}`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <strong class="font-bold text-slate-800 text-sm">${esc(cn)}</strong>
+            <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isClassComplete ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-700 border border-red-200'}">
+              ${isClassComplete ? '✔ 완료 (100%)' : `미완료 (${uncompletedCount}명 남음)`}
+            </span>
+          </div>
+          <p class="text-xs ${isClassComplete ? 'text-emerald-700 font-semibold' : 'text-slate-500'}">
+            ${isClassComplete ? `🎉 전원 완료 (${total}명 / ${total}명)` : `완료 ${completedCount}명 · 미완료 ${uncompletedCount}명 / 전체 ${total}명`}
+          </p>
+          <div class="cbar mt-2.5">
+            <div class="cfill ${isClassComplete ? 'bg-emerald-600' : 'bg-red-500'}" style="width:${rate}%"></div>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          S.evalClassFilter = cn;
+          S.selectedEvalId = id ?? S.evaluations[S.evaluations.length - 1]?.id ?? 0;
+          showView('evaluation');
+          renderEvalView();
+        });
         c.appendChild(card);
       });
     }
-    function updDashboard() { updSummary(); renderChart(); renderAttnEtabs(); renderAttnCtabs(); renderAttnList(); renderClsOverview(); }
+
+    function updDashboard() {
+      updSummary();
+      renderChart();
+      renderChartEtabs();
+      renderAttnEtabs();
+      renderAttnCtabs();
+      renderAttnList();
+      renderClsOverviewEtabs();
+      renderClsOverview();
+    }
 
     // EVALUATION VIEW
     function renderEvalSubtabs() {
@@ -1666,7 +1827,11 @@ function doGet(e) {
     }
     function getEvalStudents() {
       if (S.selectedEvalId === null) return [];
-      return S.records.filter(s => { if (S.evalClassFilter !== '전체' && s.class_name !== S.evalClassFilter) return false; if (S.hidePassedInEval && stEval(s, S.selectedEvalId).type === 'pass') return false; return true; }).sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999));
+      return S.records.filter(s => {
+        if (S.evalClassFilter !== '전체' && s.class_name !== S.evalClassFilter) return false;
+        if (S.hidePassedInEval && stEval(s, S.selectedEvalId).isCompleted) return false;
+        return true;
+      }).sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999));
     }
     function mkSel(fk, val, aria) { const sel = document.createElement('select'); sel.className = 'asel' + (val === '통과' ? ' pp' : val === '미통과' ? ' pf' : ''); sel.setAttribute('aria-label', aria); sel.dataset.field = fk; sel.innerHTML = `<option value="">미체크</option><option value="통과"${val === '통과' ? ' selected' : ''}>통과</option><option value="미통과"${val === '미통과' ? ' selected' : ''}>미통과</option>`; return sel; }
     function createEvalRow(student, id) {
@@ -1679,8 +1844,41 @@ function doGet(e) {
       [s1, s2, s3].forEach(s => { const td = document.createElement('td'); td.appendChild(s); tr.appendChild(td); });
       const tdS = document.createElement('td'); tdS.appendChild(badge); tr.appendChild(tdS);
       const lbl = document.createElement('label'); lbl.className = 'flex items-center gap-1 text-sm cursor-pointer'; lbl.appendChild(cb); lbl.append(' 제출'); const tdF = document.createElement('td'); tdF.appendChild(lbl); tr.appendChild(tdF);
-      [s1, s2, s3].forEach(sel => { sel.addEventListener('change', async () => { updSel(sel); const ok = await updField(student.__backendId, sel.dataset.field, sel.value, id); if (ok) { const cur = byId(student.__backendId); if (cur) { const ns = stEval(cur, id); badge.className = 'badge ' + ns.type; badge.textContent = ns.label; if (S.hidePassedInEval && ns.type === 'pass') { tr.style.transition = 'opacity .3s'; tr.style.opacity = '0'; setTimeout(() => { tr.remove(); updEvalCnt(); }, 310); } } } }); });
-      cb.addEventListener('change', async () => { await updField(student.__backendId, f.final, cb.checked, id); });
+      [s1, s2, s3].forEach(sel => {
+        sel.addEventListener('change', async () => {
+          updSel(sel);
+          const ok = await updField(student.__backendId, sel.dataset.field, sel.value, id);
+          if (ok) {
+            const cur = byId(student.__backendId);
+            if (cur) {
+              const ns = stEval(cur, id);
+              badge.className = 'badge ' + ns.type;
+              badge.textContent = ns.label;
+              if (S.hidePassedInEval && ns.isCompleted) {
+                tr.style.transition = 'opacity .3s';
+                tr.style.opacity = '0';
+                setTimeout(() => { tr.remove(); updEvalCnt(); }, 310);
+              }
+            }
+          }
+        });
+      });
+      cb.addEventListener('change', async () => {
+        const ok = await updField(student.__backendId, f.final, cb.checked, id);
+        if (ok) {
+          const cur = byId(student.__backendId);
+          if (cur) {
+            const ns = stEval(cur, id);
+            badge.className = 'badge ' + ns.type;
+            badge.textContent = ns.label;
+            if (S.hidePassedInEval && ns.isCompleted) {
+              tr.style.transition = 'opacity .3s';
+              tr.style.opacity = '0';
+              setTimeout(() => { tr.remove(); updEvalCnt(); }, 310);
+            }
+          }
+        }
+      });
       return tr;
     }
     function createEvalCard(student, id) {
@@ -1691,10 +1889,60 @@ function doGet(e) {
       const info = document.createElement('div'); info.innerHTML = `<p class="text-xs font-bold text-teal-800">${esc(student.class_name)} · ${student.student_number || '-'}번</p><p class="font-bold text-slate-800 text-sm">${esc(student.student_name)}</p>`;
       hdr.appendChild(info); hdr.appendChild(badge); card.appendChild(hdr);
       const grid = document.createElement('div'); grid.className = 'grid grid-cols-3 gap-2 mb-2';
-      ['1차', '2차', '3차'].forEach((lbl, i) => { const fk = [f.a1, f.a2, f.a3][i]; const val = student[fk] || ''; const w = document.createElement('label'); w.className = 'flex flex-col gap-0.5 text-xs text-slate-500 font-semibold'; w.textContent = lbl; const sel = mkSel(fk, val, lbl); sel.style.width = '100%'; w.appendChild(sel); grid.appendChild(w); sel.addEventListener('change', async () => { updSel(sel); const ok = await updField(student.__backendId, fk, sel.value, id); if (ok) { const cur = byId(student.__backendId); if (cur) { const ns = stEval(cur, id); badge.className = 'badge ' + ns.type; badge.textContent = ns.label; if (S.hidePassedInEval && ns.type === 'pass') { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(() => { card.remove(); updEvalCnt(); }, 310); } } } }); });
+      ['1차', '2차', '3차'].forEach((lbl, i) => {
+        const fk = [f.a1, f.a2, f.a3][i];
+        const val = student[fk] || '';
+        const w = document.createElement('label');
+        w.className = 'flex flex-col gap-0.5 text-xs text-slate-500 font-semibold';
+        w.textContent = lbl;
+        const sel = mkSel(fk, val, lbl);
+        sel.style.width = '100%';
+        w.appendChild(sel);
+        grid.appendChild(w);
+        sel.addEventListener('change', async () => {
+          updSel(sel);
+          const ok = await updField(student.__backendId, fk, sel.value, id);
+          if (ok) {
+            const cur = byId(student.__backendId);
+            if (cur) {
+              const ns = stEval(cur, id);
+              badge.className = 'badge ' + ns.type;
+              badge.textContent = ns.label;
+              if (S.hidePassedInEval && ns.isCompleted) {
+                card.style.transition = 'opacity .3s';
+                card.style.opacity = '0';
+                setTimeout(() => { card.remove(); updEvalCnt(); }, 310);
+              }
+            }
+          }
+        });
+      });
       card.appendChild(grid);
-      const cbL = document.createElement('label'); cbL.className = 'flex items-center gap-2 text-sm font-semibold text-slate-600 cursor-pointer'; const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'h-4 w-4 accent-teal-700'; cb.checked = Boolean(student[f.final]); cbL.appendChild(cb); cbL.append(' 최종 과제 제출'); card.appendChild(cbL);
-      cb.addEventListener('change', async () => { await updField(student.__backendId, f.final, cb.checked, id); });
+      const cbL = document.createElement('label');
+      cbL.className = 'flex items-center gap-2 text-sm font-semibold text-slate-600 cursor-pointer';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'h-4 w-4 accent-teal-700';
+      cb.checked = Boolean(student[f.final]);
+      cbL.appendChild(cb);
+      cbL.append(' 최종 과제 제출');
+      card.appendChild(cbL);
+      cb.addEventListener('change', async () => {
+        const ok = await updField(student.__backendId, f.final, cb.checked, id);
+        if (ok) {
+          const cur = byId(student.__backendId);
+          if (cur) {
+            const ns = stEval(cur, id);
+            badge.className = 'badge ' + ns.type;
+            badge.textContent = ns.label;
+            if (S.hidePassedInEval && ns.isCompleted) {
+              card.style.transition = 'opacity .3s';
+              card.style.opacity = '0';
+              setTimeout(() => { card.remove(); updEvalCnt(); }, 310);
+            }
+          }
+        }
+      });
       return card;
     }
     function updEvalCnt() { const n = Math.max(document.getElementById('eval-tbody').children.length, document.getElementById('eval-cards').children.length); document.getElementById('eval-cnt-txt').textContent = n + '명 표시 중'; }
@@ -1961,7 +2209,7 @@ function doGet(e) {
     async function bulkPass1st() {
       const id = S.selectedEvalId; if (id === null) return;
       const f = ef(id);
-      const toUpd = getEvalStudents().filter(s => !s[f.a1] && stEval(s, id).type !== 'pass');
+      const toUpd = getEvalStudents().filter(s => !s[f.a1] && !stEval(s, id).isCompleted);
       if (!toUpd.length) { toast('처리할 학생이 없습니다.'); return; }
       if (!confirm(`${toUpd.length}명의 학생을 1차 통과 처리하시겠습니까?\n(1차 결과가 없는 학생만 처리됩니다)`)) return;
       const btn = document.getElementById('bulk-pass-btn'); btn.disabled = true;
