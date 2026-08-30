@@ -1756,7 +1756,8 @@ function doGet(e) {
     }
 
     function renderClsOverview() {
-      const id = S.dashEvalId ?? S.evaluations[0]?.id ?? null;
+      const id = S.dashEvalId ?? S.evaluations[S.evaluations.length - 1]?.id ?? S.evaluations[0]?.id ?? null;
+      const currentEval = S.evaluations.find(e => e.id === id);
       const c = document.getElementById('cls-overview');
       c.innerHTML = '';
       getOrderedClasses().forEach(cn => {
@@ -1764,29 +1765,54 @@ function doGet(e) {
         const total = students.length;
         if (total === 0) return;
 
-        // 완료 판정: 시험 통과 또는 3차미통과+과제제출 완료
+        // 선택된 형성평가 완료 판정: 시험 통과 또는 3차미통과+과제제출 완료
         const completedStudents = id !== null ? students.filter(s => stEval(s, id).isCompleted) : [];
         const completedCount = completedStudents.length;
         const uncompletedCount = total - completedCount;
         const rate = total ? Math.round(completedCount / total * 100) : 0;
         const isClassComplete = total > 0 && completedCount === total;
 
+        // 정렬된 순서대로 각 형성평가별 완료 칩 구성
+        const evalChipsHtml = S.evaluations.map(ev => {
+          const evCompleted = students.filter(s => stEval(s, ev.id).isCompleted).length;
+          const isEvDone = total > 0 && evCompleted === total;
+          const isCurrent = ev.id === id;
+          return `
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${isCurrent ? 'ring-2 ring-teal-600 font-bold' : ''} ${isEvDone ? 'bg-emerald-100 text-emerald-800' : 'bg-red-50 text-red-700 border border-red-200'}" title="${esc(ev.name)}: ${isEvDone ? '전원 완료' : `${total - evCompleted}명 미완료`}">
+              ${esc(ev.name)}: ${isEvDone ? '✔' : `${total - evCompleted}명`}
+            </span>
+          `;
+        }).join('');
+
         const card = document.createElement('button');
         card.type = 'button';
         card.className = `ov-card ${isClassComplete ? 'done' : 'undone'}`;
         card.innerHTML = `
           <div class="flex items-center justify-between mb-2">
-            <strong class="font-bold text-slate-800 text-sm">${esc(cn)}</strong>
+            <strong class="font-bold text-slate-800 text-base">${esc(cn)}</strong>
             <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isClassComplete ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-700 border border-red-200'}">
               ${isClassComplete ? '✔ 완료 (100%)' : `미완료 (${uncompletedCount}명 남음)`}
             </span>
           </div>
-          <p class="text-xs ${isClassComplete ? 'text-emerald-700 font-semibold' : 'text-slate-500'}">
-            ${isClassComplete ? `🎉 전원 완료 (${total}명 / ${total}명)` : `완료 ${completedCount}명 · 미완료 ${uncompletedCount}명 / 전체 ${total}명`}
-          </p>
-          <div class="cbar mt-2.5">
-            <div class="cfill ${isClassComplete ? 'bg-emerald-600' : 'bg-red-500'}" style="width:${rate}%"></div>
+          <div class="mb-2 text-left">
+            <p class="text-xs font-bold text-slate-700 mb-0.5 truncate">
+              선택 평가: <span class="text-teal-800">${esc(currentEval ? currentEval.name : '평가 선택')}</span>
+            </p>
+            <p class="text-xs ${isClassComplete ? 'text-emerald-700 font-semibold' : 'text-slate-500'}">
+              ${isClassComplete ? `🎉 전원 완료 (${total}명 / ${total}명)` : `완료 ${completedCount}명 · 미완료 ${uncompletedCount}명 / 전체 ${total}명`}
+            </p>
+            <div class="cbar mt-1.5">
+              <div class="cfill ${isClassComplete ? 'bg-emerald-600' : 'bg-red-500'}" style="width:${rate}%"></div>
+            </div>
           </div>
+          ${S.evaluations.length > 1 ? `
+            <div class="pt-2 mt-2 border-t border-slate-100 text-left">
+              <p class="text-[11px] font-bold text-slate-400 mb-1.5">형성평가별 현황 (정렬 순서)</p>
+              <div class="flex flex-wrap gap-1">
+                ${evalChipsHtml}
+              </div>
+            </div>
+          ` : ''}
         `;
         card.addEventListener('click', () => {
           S.evalClassFilter = cn;
