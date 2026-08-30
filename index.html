@@ -515,6 +515,21 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
+      transition: transform .15s, border-color .15s, box-shadow .15s;
+    }
+
+    .ecard[draggable="true"] {
+      cursor: grab;
+    }
+
+    .ecard[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    .ecard.drag-over {
+      border: 2px dashed var(--teal);
+      background: #f0fdfa;
+      transform: scale(1.02);
     }
 
     .codeblk {
@@ -724,7 +739,8 @@
   <div class="max-w-screen-xl mx-auto">
 
     <!-- TOP NAV / BRAND HEADER -->
-    <header class="surface bg-white px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-5 flex items-center justify-between gap-2 sm:gap-3">
+    <header
+      class="surface bg-white px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-5 flex items-center justify-between gap-2 sm:gap-3">
       <!-- Left: Icon + Title + Subtitle -->
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <img src="./icon.png" alt="과학 웹앱 아이콘" class="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0">
@@ -743,8 +759,7 @@
         <span id="sync-txt" class="text-xs text-slate-400 hidden sm:inline font-medium">대기 중</span>
         <button id="manual-sync-btn"
           class="abtn text-xs flex items-center gap-1 bg-teal-50 border-teal-200 text-teal-800 hover:bg-teal-100 flex-shrink-0"
-          style="padding: 5px 9px; font-size: 11px; min-height: 30px; white-space: nowrap;"
-          type="button">
+          style="padding: 5px 9px; font-size: 11px; min-height: 30px; white-space: nowrap;" type="button">
           ☁ 동기화
         </button>
       </div>
@@ -866,9 +881,10 @@
         <div class="surface bg-white p-4 mb-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div id="eval-ctabs" class="tbar flex-wrap"></div>
-            <div id="eval-actions" class="flex flex-wrap gap-2 hv">
+            <div id="eval-actions" class="flex flex-wrap gap-2">
               <button id="hide-pass-btn" class="abtn" type="button">🚫 통과 학생 숨기기</button>
               <button id="bulk-pass-btn" class="abtn pbtn" type="button">✔ 일괄 1차 통과</button>
+              <button id="clean-eval-btn" class="abtn dbtn" type="button" title="현재 형성평가의 학생 결과를 모두 초기화합니다">🧹 전체 초기화</button>
             </div>
           </div>
           <p id="eval-cnt-txt" class="mt-2 text-xs text-slate-500">0명 표시 중</p>
@@ -1016,7 +1032,10 @@
               </div>
             </form>
             <div class="mt-5">
-              <h3 class="font-bold text-slate-700 mb-3">등록된 형성평가</h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-700">등록된 형성평가</h3>
+                <span class="text-xs text-slate-400">(💡 드래그하여 순서 조정)</span>
+              </div>
               <div id="eval-list" class="space-y-2"></div>
             </div>
           </div>
@@ -1130,7 +1149,7 @@
     let localData = [];
     try { localData = JSON.parse(localStorage.getItem(DKEY)) || []; } catch (e) { localData = []; }
     let listeners = [];
-    
+
     if (!window.dataSdk) {
       window.dataSdk = {
         async init({ onDataChanged }) {
@@ -1169,7 +1188,7 @@
         }
       };
     } else {
-      window.dataSdk.setAll = function(items) {
+      window.dataSdk.setAll = function (items) {
         localData = [...items];
         try { localStorage.setItem(DKEY, JSON.stringify(localData)); } catch (e) { }
         listeners.forEach(cb => cb(localData));
@@ -1187,7 +1206,7 @@
         const script = document.createElement('script');
         const cleanUrl = url.split('?')[0];
         script.src = `${cleanUrl}?callback=${cbName}&_t=${Date.now()}`;
-        
+
         let timer = setTimeout(() => {
           cleanup();
           reject(new Error('구글 시트 응답 시간 초과 (15초)'));
@@ -1199,12 +1218,12 @@
           delete window[cbName];
         }
 
-        window[cbName] = function(data) {
+        window[cbName] = function (data) {
           cleanup();
           resolve(data);
         };
 
-        script.onerror = function() {
+        script.onerror = function () {
           cleanup();
           reject(new Error('구글 시트 연결 실패. 배포 권한(모든 사용자) 및 최신 스크립트 적용 여부를 확인하세요.'));
         };
@@ -1390,13 +1409,13 @@ function doGet(e) {
       const f = ef(id);
       const students = [...S.records].sort((a, b) => a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || (a.student_number || 999) - (b.student_number || 999)).map(s => ({ class_name: s.class_name, student_number: s.student_number || '', student_name: s.student_name, a1: s[f.a1] || '', a2: s[f.a2] || '', a3: s[f.a3] || '', final: Boolean(s[f.final]) }));
       const body = JSON.stringify({ evalName: ev.name, grade: S.settings.grade || '', students });
-      try { 
-        document.getElementById('sync-txt').textContent = '동기화 중...'; 
-        await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body }); 
-        document.getElementById('sync-txt').textContent = '동기화 완료'; 
+      try {
+        document.getElementById('sync-txt').textContent = '동기화 중...';
+        await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body });
+        document.getElementById('sync-txt').textContent = '동기화 완료';
       }
-      catch { 
-        document.getElementById('sync-txt').textContent = '동기화 실패'; 
+      catch {
+        document.getElementById('sync-txt').textContent = '동기화 실패';
       }
     }
     function schedSync(id) { if (!S.settings.sheetsUrl) return; clearTimeout(syncTs[id]); syncTs[id] = setTimeout(() => syncEval(id), 1000); }
@@ -1405,22 +1424,26 @@ function doGet(e) {
       if (!S.settings.sheetsUrl || !evalName) return;
       try {
         await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'deleteEval', evalName }) });
-      } catch(e){}
+      } catch (e) { }
     }
 
     async function renameSheetEval(oldName, newName) {
       if (!S.settings.sheetsUrl || !oldName || !newName) return;
       try {
         await fetch(S.settings.sheetsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'renameEval', oldName, newName }) });
-      } catch(e){}
+      } catch (e) { }
     }
 
-    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - 다중 기기 완벽 동기화)
-    async function loadFromSheets() {
+    // 구글 시트에서 최신 데이터 불러오기 (양방향 연동 - 데이터 안전 보존)
+    async function loadFromSheets(force = false) {
       if (!S.settings.sheetsUrl) return;
+      if (S.pendingUpdates && S.pendingUpdates.size > 0 && !force) {
+        console.log('입력 중인 데이터가 있어 시트 동기화를 일시 대기합니다.');
+        return;
+      }
       try {
         document.getElementById('sync-txt').textContent = '시트 동기화 중...';
-        
+
         let data;
         try {
           data = await fetchJsonp(S.settings.sheetsUrl);
@@ -1431,20 +1454,31 @@ function doGet(e) {
         }
 
         if (data && data.status === 'ok' && Array.isArray(data.sheets) && data.sheets.length > 0) {
-          // 1. 구글 시트의 탭들로 평가 목록을 완벽하게 재구성 (기기 간 평가 ID 일치 보장)
-          const syncedEvals = data.sheets.map((sh, idx) => ({
-            id: idx,
-            name: sh.evalName,
-            createdAt: new Date().toISOString()
-          }));
-          S.evaluations = syncedEvals;
-          saveEvals(S.evaluations);
+          // 1. 구글 시트의 탭 목록과 로컬의 평가 목록 안전하게 병합 (새로 추가된 평가 유실 방지)
+          const sheetEvalNames = data.sheets.map(sh => sh.evalName).filter(Boolean);
           
-          if (S.selectedEvalId === null || !syncedEvals.some(e => e.id === S.selectedEvalId)) {
-            S.selectedEvalId = syncedEvals[0]?.id ?? 0;
+          let currentEvals = [...S.evaluations];
+          // 시트에 있는 평가 중 로컬에 없는 것만 추가
+          sheetEvalNames.forEach(shName => {
+            if (!currentEvals.some(e => e.name === shName)) {
+              currentEvals.push({
+                id: nxtId(),
+                name: shName,
+                createdAt: new Date().toISOString()
+              });
+            }
+          });
+          
+          if (currentEvals.length > 0) {
+            S.evaluations = currentEvals;
+            saveEvals(S.evaluations);
           }
-          if (S.dashEvalId === null || !syncedEvals.some(e => e.id === S.dashEvalId)) {
-            S.dashEvalId = syncedEvals[0]?.id ?? 0;
+
+          if (S.selectedEvalId === null || !S.evaluations.some(e => e.id === S.selectedEvalId)) {
+            S.selectedEvalId = S.evaluations[S.evaluations.length - 1]?.id ?? 0;
+          }
+          if (S.dashEvalId === null || !S.evaluations.some(e => e.id === S.dashEvalId)) {
+            S.dashEvalId = S.evaluations[S.evaluations.length - 1]?.id ?? 0;
           }
 
           // 2. 학생 목록 및 각 평가별 1~3차 결과, 최종제출 여부 병합
@@ -1457,8 +1491,11 @@ function doGet(e) {
           });
 
           // 구글 시트의 모든 평가 시트 데이터 순회
-          data.sheets.forEach((sheetData, sIdx) => {
-            const f = ef(sIdx);
+          data.sheets.forEach((sheetData) => {
+            const matchedEval = S.evaluations.find(e => e.name === sheetData.evalName);
+            if (!matchedEval) return;
+            const f = ef(matchedEval.id);
+
             (sheetData.students || []).forEach(s => {
               const cn = (s.class_name || '').trim();
               const snm = (s.student_name || '').trim();
@@ -1475,6 +1512,9 @@ function doGet(e) {
                 };
                 studentMap.set(k, student);
               }
+              if (s.student_number && !student.student_number) {
+                student.student_number = s.student_number;
+              }
               // 1차, 2차, 3차 통과/미통과 결과 반영
               student[f.a1] = (s.a1 && s.a1 !== '미체크') ? s.a1 : '';
               student[f.a2] = (s.a2 && s.a2 !== '미체크') ? s.a2 : '';
@@ -1484,9 +1524,9 @@ function doGet(e) {
             });
           });
 
-          const studentList = Array.from(studentMap.values()).sort((a, b) => 
-            a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) || 
-            (a.student_number || 999) - (b.student_number || 999) || 
+          const studentList = Array.from(studentMap.values()).sort((a, b) =>
+            a.class_name.localeCompare(b.class_name, 'ko', { numeric: true }) ||
+            (a.student_number || 999) - (b.student_number || 999) ||
             a.student_name.localeCompare(b.student_name, 'ko')
           );
 
@@ -1495,7 +1535,7 @@ function doGet(e) {
           } else {
             try { localStorage.setItem(DKEY, JSON.stringify(studentList)); } catch (e) { }
           }
-          
+
           S.records = studentList;
           refreshAll();
           document.getElementById('sync-txt').textContent = '동기화 완료';
@@ -1530,9 +1570,9 @@ function doGet(e) {
       document.getElementById('sc-eval-lbl').textContent = ev ? `(${ev.name})` : '';
       const g = { pass: 0, progress: 0, fail: 0 };
       const targetId = ev ? ev.id : 0;
-      S.records.forEach(s => { 
-        const t = stEval(s, targetId).type; 
-        if (g[t] !== undefined) g[t]++; 
+      S.records.forEach(s => {
+        const t = stEval(s, targetId).type;
+        if (g[t] !== undefined) g[t]++;
       });
       document.getElementById('sc-pass').textContent = g.pass;
       document.getElementById('sc-prog').textContent = g.progress;
@@ -1620,9 +1660,9 @@ function doGet(e) {
     }
     function renderEvalActions() {
       const bar = document.getElementById('eval-actions');
-      const isFirst = S.evaluations.length > 0 && S.selectedEvalId === S.evaluations[0].id;
-      bar.classList.toggle('hv', !isFirst);
-      if (isFirst) { document.getElementById('hide-pass-btn').textContent = S.hidePassedInEval ? '👁 통과 학생 보이기' : '🚫 통과 학생 숨기기'; }
+      const hasEval = S.evaluations.length > 0 && S.selectedEvalId !== null;
+      bar.classList.toggle('hv', !hasEval);
+      document.getElementById('hide-pass-btn').textContent = S.hidePassedInEval ? '👁 통과 학생 보이기' : '🚫 통과 학생 숨기기';
     }
     function getEvalStudents() {
       if (S.selectedEvalId === null) return [];
@@ -1680,39 +1720,134 @@ function doGet(e) {
       list.innerHTML = '';
       S.evaluations.forEach((ev, idx) => {
         const passed = S.records.filter(s => stEval(s, ev.id).type === 'pass').length;
-        const card = document.createElement('div'); card.className = 'ecard';
-        card.innerHTML = `<div class="flex-1 min-w-0"><div class="flex items-center gap-2 mb-0.5"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-700 text-white text-xs font-bold flex-shrink-0">${idx + 1}</span><p class="font-bold text-slate-800 text-sm truncate evnd">${esc(ev.name)}</p></div><input class="fc evni hidden mt-1" type="text" value="${esc(ev.name)}" maxlength="50" style="min-height:32px;"><p class="text-xs text-slate-400 ml-7">통과 ${passed}명 · ${new Date(ev.createdAt).toLocaleDateString('ko')}</p></div><div class="flex flex-wrap gap-1.5 flex-shrink-0"><button class="abtn evrn text-xs" type="button">이름 수정</button><button class="abtn evsv hidden text-xs" type="button">저장</button>${idx > 0 ? `<button class="abtn dbtn evdl text-xs" type="button">삭제</button>` : '<span class="text-xs text-slate-400 self-center">(기본)</span>'}</div>`;
+        const card = document.createElement('div');
+        card.className = 'ecard';
+        card.draggable = true;
+        card.dataset.evalId = String(ev.id);
+        card.title = '드래그하여 형성평가 순서 변경';
+
+        card.innerHTML = `
+          <div class="flex items-start gap-2.5 flex-1 min-w-0">
+            <span class="inline-flex items-center justify-center cursor-grab text-slate-400 hover:text-slate-600 select-none py-1 flex-shrink-0" title="드래그 핸들">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-teal-700 text-white text-xs font-bold flex-shrink-0">${idx + 1}</span>
+                <p class="font-bold text-slate-800 text-sm truncate evnd">${esc(ev.name)}</p>
+              </div>
+              <input class="fc evni hidden mt-1" type="text" value="${esc(ev.name)}" maxlength="50" style="min-height:32px;">
+              <p class="text-xs text-slate-400 ml-7">통과 ${passed}명 · ${new Date(ev.createdAt).toLocaleDateString('ko')}</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 flex-shrink-0">
+            <button class="abtn evrn text-xs" type="button">이름 수정</button>
+            <button class="abtn evsv hidden text-xs" type="button">저장</button>
+            ${idx > 0 || S.evaluations.length > 1 ? `<button class="abtn dbtn evdl text-xs" type="button">삭제</button>` : '<span class="text-xs text-slate-400 self-center">(기본)</span>'}
+          </div>
+        `;
+
+        // 드래그 앤 드롭 이벤트
+        card.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', String(ev.id));
+          e.dataTransfer.effectAllowed = 'move';
+          card.classList.add('opacity-50');
+        });
+        card.addEventListener('dragend', () => {
+          card.classList.remove('opacity-50');
+          document.querySelectorAll('.ecard').forEach(el => el.classList.remove('drag-over'));
+        });
+        card.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          card.classList.add('drag-over');
+        });
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('drag-over');
+        });
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const srcIdStr = e.dataTransfer.getData('text/plain');
+          if (!srcIdStr) return;
+          const srcId = Number(srcIdStr);
+          if (srcId === ev.id) return;
+          const srcIdx = S.evaluations.findIndex(x => x.id === srcId);
+          const dstIdx = S.evaluations.findIndex(x => x.id === ev.id);
+          if (srcIdx !== -1 && dstIdx !== -1) {
+            const [moved] = S.evaluations.splice(srcIdx, 1);
+            S.evaluations.splice(dstIdx, 0, moved);
+            saveEvals(S.evaluations);
+            refreshAll();
+            toast('형성평가 순서가 변경되었습니다.', 'ok');
+          }
+        });
+
         const nd = card.querySelector('.evnd'), ni = card.querySelector('.evni'), rb = card.querySelector('.evrn'), sb = card.querySelector('.evsv');
         rb?.addEventListener('click', () => { nd.classList.add('hidden'); ni.classList.remove('hidden'); rb.classList.add('hidden'); sb?.classList.remove('hidden'); ni.focus(); ni.select(); });
-        sb?.addEventListener('click', async () => { 
-          const n = ni.value.trim(); 
-          if (!n) { toast('평가 이름을 입력하세요.', 'err'); return; } 
+        sb?.addEventListener('click', async () => {
+          const n = ni.value.trim();
+          if (!n) { toast('평가 이름을 입력하세요.', 'err'); return; }
           const oldName = ev.name;
-          ev.name = n; 
-          saveEvals(S.evaluations); 
-          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); 
-          toast('"' + n + '" 이름 수정 완료', 'ok'); 
+          ev.name = n;
+          saveEvals(S.evaluations);
+          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs();
+          toast('"' + n + '" 이름 수정 완료', 'ok');
           await renameSheetEval(oldName, n);
         });
         const db = card.querySelector('.evdl');
-        db?.addEventListener('click', async () => { 
-          if (!db.classList.contains('cf')) { 
-            db.classList.add('cf'); 
-            db.textContent = '삭제 확인'; 
-            setTimeout(() => { if (db.isConnected && db.classList.contains('cf')) { db.classList.remove('cf'); db.textContent = '삭제'; } }, 3500); 
-            return; 
-          } 
+        db?.addEventListener('click', async () => {
+          if (!db.classList.contains('cf')) {
+            db.classList.add('cf');
+            db.textContent = '삭제 확인';
+            setTimeout(() => { if (db.isConnected && db.classList.contains('cf')) { db.classList.remove('cf'); db.textContent = '삭제'; } }, 3500);
+            return;
+          }
           const delName = ev.name;
-          S.evaluations = S.evaluations.filter(e => e.id !== ev.id); 
-          saveEvals(S.evaluations); 
-          if (S.selectedEvalId === ev.id) S.selectedEvalId = S.evaluations[0]?.id ?? 0; 
-          if (S.dashEvalId === ev.id) S.dashEvalId = S.evaluations[0]?.id ?? 0; 
-          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); updDashboard(); 
-          toast('평가 삭제 완료', 'ok'); 
+          S.evaluations = S.evaluations.filter(e => e.id !== ev.id);
+          saveEvals(S.evaluations);
+          if (S.selectedEvalId === ev.id) S.selectedEvalId = S.evaluations[S.evaluations.length - 1]?.id ?? 0;
+          if (S.dashEvalId === ev.id) S.dashEvalId = S.evaluations[S.evaluations.length - 1]?.id ?? 0;
+          renderEvalMng(); renderEvalSubtabs(); renderChartEtabs(); renderAttnEtabs(); updDashboard();
+          toast('평가 삭제 완료', 'ok');
           await deleteSheetEval(delName);
         });
         list.appendChild(card);
       });
+    }
+
+    // BULK CLEAN CURRENT EVAL
+    async function cleanCurrentEval() {
+      const id = S.selectedEvalId;
+      if (id === null) return;
+      const ev = S.evaluations.find(e => e.id === id);
+      const evName = ev ? ev.name : '선택된 평가';
+      const targetStudents = getEvalStudents();
+      if (!targetStudents.length) { toast('초기화할 학생이 없습니다.'); return; }
+
+      const scopeTxt = S.evalClassFilter === '전체' ? '모든 반' : `'${S.evalClassFilter}'`;
+      if (!confirm(`[${evName}] ${scopeTxt} 학생 ${targetStudents.length}명의 평가 결과를 모두 초기화(깨끗이)하시겠습니까?\n\n※ 1차, 2차, 3차 결과 및 최종 과제 제출 여부가 모두 '미체크/미제출'로 리셋됩니다.`)) return;
+
+      const btn = document.getElementById('clean-eval-btn');
+      if (btn) btn.disabled = true;
+      const f = ef(id);
+      let done = 0;
+      for (const st of targetStudents) {
+        const res = await window.dataSdk.update({ ...st, [f.a1]: '', [f.a2]: '', [f.a3]: '', [f.final]: false });
+        if (res.isOk) {
+          const cur = byId(st.__backendId);
+          if (cur) {
+            cur[f.a1] = '';
+            cur[f.a2] = '';
+            cur[f.a3] = '';
+            cur[f.final] = false;
+          }
+          done++;
+        }
+      }
+      if (btn) btn.disabled = false;
+      toast(`[${evName}] ${done}명의 결과가 깨끗이 초기화되었습니다.`, 'ok');
+      updSummary(); renderEvalStudents(); renderChart(); renderAttnList(); schedSync(id);
     }
 
     // ROSTER VIEW
@@ -1802,7 +1937,12 @@ function doGet(e) {
       Object.values(map).forEach(id => document.getElementById(id).classList.add('hv'));
       const vid = map[view]; if (vid) document.getElementById(vid).classList.remove('hv');
       document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === view));
-      if (view === 'evaluation') renderEvalView();
+      if (view === 'evaluation') {
+        if (S.selectedEvalId === null || !S.evaluations.some(e => e.id === S.selectedEvalId)) {
+          S.selectedEvalId = S.evaluations[S.evaluations.length - 1]?.id ?? 0;
+        }
+        renderEvalView();
+      }
       else if (view === 'management') { renderClsFilters(); renderRoster(); }
       else if (view === 'eval-mng') { renderEvalMng(); document.getElementById('grade-in').value = S.settings.grade || ''; document.getElementById('sheets-url').value = S.settings.sheetsUrl || ''; }
       else if (view === 'dashboard') updDashboard();
@@ -1879,14 +2019,36 @@ function doGet(e) {
       document.getElementById('manual-sync-btn').addEventListener('click', () => syncAll());
       document.getElementById('hide-pass-btn').addEventListener('click', () => { S.hidePassedInEval = !S.hidePassedInEval; renderEvalActions(); renderEvalStudents(); });
       document.getElementById('bulk-pass-btn').addEventListener('click', () => bulkPass1st());
-      document.getElementById('add-eval-form').addEventListener('submit', e => { e.preventDefault(); const ni = document.getElementById('new-eval-name'), name = ni.value.trim(); if (!name) { document.getElementById('eval-form-msg').textContent = '평가 이름을 입력하세요.'; return; } const nev = { id: nxtId(), name, createdAt: new Date().toISOString() }; S.evaluations.push(nev); saveEvals(S.evaluations); ni.value = ''; document.getElementById('eval-form-msg').textContent = `"${name}" 추가 완료.`; renderEvalMng(); renderChartEtabs(); renderAttnEtabs(); toast('"' + name + '" 평가 추가됨', 'ok'); });
+      document.getElementById('clean-eval-btn').addEventListener('click', () => cleanCurrentEval());
+      document.getElementById('add-eval-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const ni = document.getElementById('new-eval-name'), name = ni.value.trim();
+        if (!name) { document.getElementById('eval-form-msg').textContent = '평가 이름을 입력하세요.'; return; }
+        if (S.evaluations.some(ev => ev.name === name)) {
+          document.getElementById('eval-form-msg').textContent = '동일한 이름의 평가가 이미 존재합니다.';
+          return;
+        }
+        const nev = { id: nxtId(), name, createdAt: new Date().toISOString() };
+        S.evaluations.push(nev);
+        saveEvals(S.evaluations);
+        S.selectedEvalId = nev.id;
+        S.dashEvalId = nev.id;
+        ni.value = '';
+        document.getElementById('eval-form-msg').textContent = `"${name}" 추가 완료.`;
+        renderEvalMng();
+        renderEvalSubtabs();
+        renderChartEtabs();
+        renderAttnEtabs();
+        toast('"' + name + '" 평가 추가됨', 'ok');
+        await syncEval(nev.id);
+      });
       document.getElementById('save-cfg-btn').addEventListener('click', () => {
         S.settings.grade = document.getElementById('grade-in').value.trim();
         S.settings.sheetsUrl = document.getElementById('sheets-url').value.trim();
         saveCfg(S.settings);
         document.getElementById('cfg-msg').textContent = '설정 저장 완료.';
         toast('설정 저장 완료. 구글 시트와 연결을 확인합니다.', 'ok');
-        if (S.settings.sheetsUrl) loadFromSheets();
+        if (S.settings.sheetsUrl) loadFromSheets(true);
       });
       document.getElementById('sync-all-btn').addEventListener('click', () => syncAll());
       document.getElementById('copy-code-btn').addEventListener('click', () => { navigator.clipboard.writeText(SCRIPT_TPL).then(() => toast('코드 복사 완료', 'ok')); });
@@ -2028,8 +2190,12 @@ function doGet(e) {
       document.getElementById('sheets-url').value = S.settings.sheetsUrl || '';
       S.evaluations = loadEvals();
       S.classOrder = loadClassOrder();
-      S.selectedEvalId = S.evaluations[0]?.id ?? 0;
-      S.dashEvalId = S.evaluations[0]?.id ?? 0;
+      
+      // 항상 마지막 기록된(추가된) 평가를 기본 선택
+      const lastEval = S.evaluations[S.evaluations.length - 1];
+      S.selectedEvalId = lastEval ? lastEval.id : 0;
+      S.dashEvalId = lastEval ? lastEval.id : 0;
+      
       renderChartEtabs(); renderAttnEtabs(); renderAttnCtabs();
       const res = await window.dataSdk.init({
         onDataChanged(data) {
@@ -2038,19 +2204,19 @@ function doGet(e) {
         }
       });
       if (!res.isOk) document.getElementById('form-msg').textContent = '저장 기능 초기화 실패. 새로고침 해주세요.';
-      if (S.settings.sheetsUrl) loadFromSheets();
+      if (S.settings.sheetsUrl) loadFromSheets(true);
 
-      // 화면 포커스(복귀) 시 다른 기기 변경사항 자동 즉시 동기화
+      // 화면 포커스(복귀) 시 다른 기기 변경사항 안전 동기화 (입력 중이 아닐 때만)
       window.addEventListener('focus', () => {
-        if (S.settings.sheetsUrl && !document.hidden) loadFromSheets();
+        if (S.settings.sheetsUrl && !document.hidden && (!S.pendingUpdates || S.pendingUpdates.size === 0)) {
+          loadFromSheets(false);
+        }
       });
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && S.settings.sheetsUrl) loadFromSheets();
+        if (!document.hidden && S.settings.sheetsUrl && (!S.pendingUpdates || S.pendingUpdates.size === 0)) {
+          loadFromSheets(false);
+        }
       });
-      // 15초 주기 백그라운드 자동 동기화
-      setInterval(() => {
-        if (S.settings.sheetsUrl && !document.hidden) loadFromSheets();
-      }, 15000);
     }
 
     document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); setupEvents(); initApp(); });
